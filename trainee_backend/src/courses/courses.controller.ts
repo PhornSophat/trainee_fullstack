@@ -7,6 +7,7 @@ import { UpdateLessonProgressDto } from './dto/update-lesson-progress.dto';
 import { RequestAccessDto } from './dto/request-access.dto';
 import { SetApprovalDto } from './dto/set-approval.dto';
 import { UpdateCourseImageDto } from './dto/update-course-image.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 @Controller('courses') // prefix all routes with /courses
 export class CoursesController {
@@ -50,10 +51,12 @@ export class CoursesController {
   }
 
   @Patch(':id/image')
-  updateImage(
-    @Param('id') id: string,
-    @Body() body: UpdateCourseImageDto,
-  ) {
+  updateImage(@Param('id') id: string, @Body() body: UpdateCourseImageDto) {
     return this.svc.updateCourseImage(Number(id), body.imageUrl);
+  }
+
+  @Patch(':id')
+  updateCourse(@Param('id') id: string, @Body() body: UpdateCourseDto) {
+    return this.svc.updateCourse(Number(id), body);
   }
 }

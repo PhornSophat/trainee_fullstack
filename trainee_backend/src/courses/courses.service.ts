@@ -12,6 +12,7 @@ import { Chapter } from './entities/chapter.entity';
 import { CourseCardItemDto } from './dto/course-card-item.dto';
 import { plainToInstance } from 'class-transformer';
 import { ChapterDto } from './dto/chapter.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 @Injectable()
 export class CoursesService {
@@ -138,18 +139,26 @@ export class CoursesService {
   }
 
   async setApprovalStatus(courseId: number, status: string) {
+    const formattedStatus = (status || '').toUpperCase();
     const allowed = ['APPROVED', 'REJECTED', 'PENDING', 'NOT_REQUESTED'];
     if (!allowed.includes(status))
-      throw new BadRequestException('Invalid Status!');
+      if (!allowed.includes(formattedStatus))
+        throw new BadRequestException('Invalid Status!');
 
     const course = await this.courseRepo.findOne({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found!');
     course.approval_status = status;
+    course.approval_status = formattedStatus;
     await this.courseRepo.save(course);
     return { message: `Status set to ${status}`, status };
+    this.cache = null;
+    return {
+      message: `Status set to ${formattedStatus}`,
+      status: formattedStatus,
+    };
   }
 
-  async updateCourseImage( courseId: number, imageUrl: string ) {
+  async updateCourseImage(courseId: number, imageUrl: string) {
     const course = await this.courseRepo.findOne({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found!');
 
@@ -159,5 +168,21 @@ export class CoursesService {
     this.cache = null;
 
     return { message: 'Thumbnail updated successfully', imageUrl };
+  }
+
+  async updateCourse(courseId: number, dto: UpdateCourseDto) {
+    const course = await this.courseRepo.findOne({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found!');
+
+    if (dto.title !== undefined) course.title = dto.title;
+    if (dto.khmerTitle !== undefined) course.khmer_title = dto.khmerTitle;
+    if (dto.major !== undefined) course.major = dto.major;
+    if (dto.level !== undefined) course.level = dto.level;
+    if (dto.description !== undefined) course.description = dto.description;
+
+    await this.courseRepo.save(course);
+    this.cache = null;
+
+    return { message: 'Course updated successfully', course };
   }
 }

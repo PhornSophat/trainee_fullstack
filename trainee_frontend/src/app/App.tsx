@@ -1,5 +1,5 @@
 // src/app/App.tsx
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/error-boundary/ErrorBoundary';
 import { UserLayout } from '@/layouts/UserLayout';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -16,6 +16,11 @@ import { CourseApproval } from '@/features/admin/pages/CourseApproval';
 import { ToastNotification } from '@/components/toast/ToastNotification';
 import { AdminRouteGuard } from '@/components/auth/AdminRouteGuard';
 
+function CourseLearningRedirect() {
+  const { courseId } = useParams();
+  return <Navigate to={`/trainee/courses/${courseId || ''}/learning`} replace />;
+}
+
 export function App() {
   return (
     <ErrorBoundary>
@@ -28,6 +33,7 @@ export function App() {
 
           {/* Legacy route redirects */}
           <Route path="/courses/:courseId/learning" element={<Navigate to="/trainee/courses/:courseId/learning" replace />} />
+          <Route path="/courses/:courseId/learning" element={<CourseLearningRedirect />} />
           <Route path="/admin" element={<Navigate to="/admin/insight" replace />} />
 
           {/* Main User/Admin Layout routes (shares Header & MainSidebar) */}
@@ -38,15 +44,15 @@ export function App() {
             <Route path="/trainee/programs/:courseId/learning" element={<CourseVideoLearning />} />
             <Route path="/trainee/courses/:courseId/learning" element={<CourseVideoLearning />} />
 
-              <Route element={<AdminRouteGuard />}>
-                <Route path="/admin/insight" element={<DashboardOverview />} />
-                <Route path="/admin/training-insight" element={<Insight />} />
-                <Route path="/admin/courses" element={<AdminViewCourse />} />
-                <Route path="/admin/approvals" element={<CourseApproval />} />
-                <Route path="/admin/overview" element={<Overview />} />
-                <Route path="/admin/tasks" element={<Tasks />} />
-                <Route path="/admin/settings" element={<Setting />} />
-              </Route>
+            <Route element={<AdminRouteGuard />}>
+              <Route path="/admin/insight" element={<DashboardOverview />} />
+              <Route path="/admin/training-insight" element={<Insight />} />
+              <Route path="/admin/courses" element={<AdminViewCourse />} />
+              <Route path="/admin/approvals" element={<CourseApproval />} />
+              <Route path="/admin/overview" element={<Overview />} />
+              <Route path="/admin/tasks" element={<Tasks />} />
+              <Route path="/admin/settings" element={<Setting />} />
+            </Route>
           </Route>
 
           {/* Standalone Admin Layout routes */}

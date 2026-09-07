@@ -133,3 +133,10 @@ export async function updateCourseImageApi( courseId: string | number, imageUrl:
   const res = await apiClient.patch(`/courses/${courseId}/image`, { imageUrl });
   return res.data;
 }
+
+export async function updateCourseApi( courseId: string | number, payload: Partial<CourseCardItem> ) {
+  if (!isApiConfigured) return { meassage: "Updated (mock)", ...payload };
+
+  const res = await apiClient.patch(`/courses/${courseId}`, payload);
+  return res.data;
+}

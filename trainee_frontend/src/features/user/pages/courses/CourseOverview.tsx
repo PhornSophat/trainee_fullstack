@@ -87,14 +87,38 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                                     {course.level}
                                 </span>
 
-                                <span className="text-base font-bold text-amber-400">
-                                    {course.rating ?? "4.3"}
-                                </span>
+                                    <span className="text-base font-bold text-amber-400">
+                                        {course.rating ?? "4.3"}
+                                    </span>
 
-                                {/* Star Rating */}
-                                <div className="flex text-sm text-amber-400">
-                                    ★★★★★
-                                </div>
+                                        <div className="flex items-center gap-0.5 text-sm text-amber-400">
+                                            {Array.from({ length: Math.floor(Number(course.rating) || 0) }).map((_, i) => (
+                                                <svg
+                                                    key={i}
+                                                    className="w-4 h-4 fill-current text-amber-400"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.21L7 14.14 2 9.21l6.9-1.11L12 2z" />
+                                                </svg>
+                                            ))}
+                                            {((Number(course.rating) || 0) % 1 >= 0.5) ? (
+                                                <svg
+                                                    className="w-4 h-4 fill-current text-amber-400"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.21L7 14.14 2 9.21l6.9-1.11L12 2z" />
+                                                </svg>
+                                            ) : null}
+                                            {Array.from({ length: 5 - Math.floor(Number(course.rating) || 0) - ((Number(course.rating) || 0) % 1 >= 0.5 ? 1 : 0) }).map((_, i) => (
+                                                <svg
+                                                    key={i}
+                                                    className="w-4 h-4 fill-current text-slate-300"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.21L7 14.14 2 9.21l6.9-1.11L12 2z" />
+                                                </svg>
+                                            ))}
+                                        </div>
 
                                 <span className="text-slate-400">
                                     ({course.reviewCount ?? 3} reviews)

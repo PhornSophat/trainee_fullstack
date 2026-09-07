@@ -45,6 +45,17 @@ export function CourseListing() {
     (category) => category.id === selectedCategoryId
   );
 
+  // Filter by category (if clicked) and sort APPROVED courses first
+  const filteredCourses = courses
+    .filter((course) => {
+      if (!selectedCategoryId) return true;
+      return String(course.categoryId) === String(selectedCategoryId);
+    })
+    .sort((a, b) => {
+      if (a.approvalStatus === 'APPROVED' && b.approvalStatus !== 'APPROVED') return -1;
+      if (a.approvalStatus !== 'APPROVED' && b.approvalStatus === 'APPROVED') return 1;
+      return 0;
+    });
 
   return (
     <div className="flex flex-col items-center m-4 text-center rounded-sm">
@@ -82,7 +93,7 @@ export function CourseListing() {
 
       {/* Courses */}
       <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {courses.map((course) => (
+        {filteredCourses.map((course) => (
           <CourseCard
             key={course.id}
             course={course}

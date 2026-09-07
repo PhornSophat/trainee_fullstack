@@ -59,7 +59,7 @@ export function CourseApproval() {
                   Reject
                 </button>
                 <button
-                  onClick={() => navigate(`/courses/${c.id}`)}
+                  onClick={() => navigate(`/trainee/programs/${c.id}`)}
                   className="rounded border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
                 >
                   View

@@ -1,15 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
+    ArrowLeft,
     BookOpen,
-    CheckSquare,
     ClipboardList,
     Code2,
-    FileText,
     Info,
     X,
 } from "lucide-react";
-import type { CourseCardItem } from "@/types/course";
 import type { LucideIcon } from "lucide-react";
+import { useCoursesStore } from "@/store/courseStore";
+import type { CourseCardItem } from "@/types/course";
+
+import { CourseCoverBanner } from "./CourseCoverBanner";
+import { GeneralDrawerContent } from "./general-drawer/GeneralDrawerContent";
 
 type CourseDetailDrawerProps = {
     course: CourseCardItem | null;
@@ -22,8 +25,17 @@ export function CourseDetailDrawer({
     isOpen,
     onClose,
 }: CourseDetailDrawerProps) {
+    const [activeView, setActiveView] = useState<'main' | 'general'>('main');
+
+    // Subscribe to store so updates (like cover image changes) are reflected immediately in real time across all views!
+    const storeCourses = useCoursesStore((s) => s.courses);
+    const activeCourse = storeCourses.find((c) => c.id === course?.id) || course;
+
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen) {
+            setActiveView('main');
+            return;
+        }
 
         const closeOnEscape = (event: KeyboardEvent) => {
             if (event.key === "Escape") onClose();
@@ -41,25 +53,39 @@ export function CourseDetailDrawer({
 
     return (
         <div
-            className={`fixed inset-0 z-50 overflow-hidden transition ${isOpen && course ? "pointer-events-auto" : "pointer-events-none"}`}
-            aria-hidden={!isOpen || !course}
+            className={`fixed inset-0 z-50 overflow-hidden transition ${
+                isOpen && activeCourse ? "pointer-events-auto" : "pointer-events-none"
+            }`}
+            aria-hidden={!isOpen || !activeCourse}
         >
             <button
                 type="button"
                 aria-label="Close course details"
                 onClick={onClose}
-                className={`absolute inset-0 bg-slate-900/35 transition-opacity duration-300 ${isOpen && course ? "opacity-100" : "opacity-0"}`}
+                className={`absolute inset-0 bg-slate-900/35 transition-opacity duration-300 ${
+                    isOpen && activeCourse ? "opacity-100" : "opacity-0"
+                }`}
             />
 
             <aside
                 role="dialog"
                 aria-modal="true"
-                aria-label={course ? `${course.title} details` : "Course details"}
-                className={`absolute inset-y-0 right-0 flex w-full max-w-[600px] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${isOpen && course ? "translate-x-0" : "translate-x-full"}`}
+                aria-label={activeCourse ? `${activeCourse.title} details` : "Course details"}
+                className={`absolute inset-y-0 right-0 flex w-full max-w-[600px] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
+                    isOpen && activeCourse ? "translate-x-0" : "translate-x-full"
+                }`}
             >
-                <DrawerHeader isOpen={isOpen} onClose={onClose} />
-
-                {course && <CourseDrawerContent course={course} />}
+                {activeView === 'main' ? (
+                    <>
+                        <DrawerHeader isOpen={isOpen} onClose={onClose} title="Programs" />
+                        {activeCourse && <CourseDrawerContent course={activeCourse} onOpenGeneral={() => setActiveView('general')} />}
+                    </>
+                ) : (
+                    <>
+                        <DrawerHeader isOpen={isOpen} onClose={() => setActiveView('main')} title="General" isBack />
+                        {activeCourse && <GeneralDrawerContent course={activeCourse} />}
+                    </>
+                )}
             </aside>
         </div>
     );
@@ -68,40 +94,50 @@ export function CourseDetailDrawer({
 function DrawerHeader({
     isOpen,
     onClose,
+    title,
+    isBack = false,
 }: {
     isOpen: boolean;
     onClose: () => void;
+    title: string;
+    isBack?: boolean;
 }) {
     return (
-        <header className="flex items-center justify-center h-16 p-4 border-b shrink-0 border-slate-200">
-            <h2 className="font-kantumruy text-lg font-semibold text-[#60738d]">
-                Programs
-            </h2>
+        <header className="relative flex items-center justify-center h-16 p-4 border-b shrink-0 border-slate-300">
             {isOpen && (
                 <button
                     type="button"
                     onClick={onClose}
-                    aria-label="Close course details"
-                    className="absolute -left-4 top-7 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-l-full bg-white text-[#60738d] shadow-md hover:text-slate-900"
+                    aria-label={isBack ? "Back to programs" : "Close course details"}
+                    className="absolute -left-4 top-3.5 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full bg-white text-[#60738d] shadow-md hover:text-slate-900 border border-slate-200 z-10"
                 >
-                    <X className="w-5 h-5" />
+                    {isBack ? <ArrowLeft className="w-5 h-5 text-slate-600" /> : <X className="w-5 h-5" />}
                 </button>
             )}
+            <h2 className="font-kantumruy text-lg font-semibold text-[#60738d]">
+                {title}
+            </h2>
         </header>
     );
 }
 
-function CourseDrawerContent({ course }: { course: CourseCardItem }) {
+function CourseDrawerContent({
+    course,
+    onOpenGeneral,
+}: {
+    course: CourseCardItem;
+    onOpenGeneral: () => void;
+}) {
     return (
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto font-kantumruy">
             <CourseSummary course={course} />
 
             <section className="px-4 pb-5">
                 <h3 className="mb-3 font-kantumruy text-sm font-semibold text-[#60738d]">
                     Manage
                 </h3>
-                <div className="flex">
-                    <ManageTile icon={Info} label="General" />
+                <div className="flex gap-2">
+                    <ManageTile icon={Info} label="General" onClick={onOpenGeneral} />
                     <ManageTile icon={BookOpen} label="Curriculum" />
                     <ManageTile icon={ClipboardList} label="Homework" />
                 </div>
@@ -134,63 +170,47 @@ function CourseDrawerContent({ course }: { course: CourseCardItem }) {
     );
 }
 
-function CourseSummary({ course }: { course: CourseCardItem }) {
-    return (
-        <section className="px-4 pt-5 pb-6">
-            <div className="relative mb-5 h-48 overflow-hidden rounded-md bg-[#e7f3f7]">
-                {course.imageUrl ? (
-                    <img
-                        src={course.imageUrl}
-                        alt=""
-                        className="object-contain w-full h-full opacity-90"
-                    />
-                ) : (
-                    <Code2 className="w-10 h-10 mx-auto mt-7 text-cyan-600" />
-                )}
-            </div>
-
-            <div className="flex items-start gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[#60738d] shadow-sm">
-                    <Code2 className="w-8 h-8" />
-                </div>
-
-                <div className="min-w-0 pt-1">
-                    <h3 className="text-xl font-semibold truncate text-slate-800">
-                        {course.title}
-                    </h3>
-                    <p className="mt-1 truncate text-md font-kantumruy text-slate-500 ">
-                        {course.khmerTitle || "ជំនាញបច្ចេកវិទ្យាព័ត៌មាន"}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#60738d]">
-                        <span className={`rounded-full px-2.5 py-1 font-semibold ${course.level === "BASIC" ? "bg-emerald-100 text-emerald-600" : course.level === "INTERMEDIATE" ? "bg-amber-100 text-amber-600" : "bg-rose-100 text-rose-500"}`}>
-                            {course.level === "BASIC" ? "Beginner" : course.level === "INTERMEDIATE" ? "Intermediate" : "Advanced"}
-                        </span>
-                        <span><BookOpen className="mr-1 inline h-3.5 w-3.5" />{course.lessons} lessons</span>
-                        <span><CheckSquare className="mr-1 inline h-3.5 w-3.5" />{course.tasks} tasks</span>
-                        <span><FileText className="mr-1 inline h-3.5 w-3.5" />{course.duration}</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
-}
-
 function ManageTile({
     icon: Icon,
     label,
+    onClick,
 }: {
     icon: LucideIcon;
     label: string;
+    onClick?: () => void;
 }) {
     return (
         <button
             type="button"
-            className="flex flex-col items-center gap-2 px-4 py-3 text-center rounded-lg"
+            onClick={onClick}
+            className="flex flex-col items-center gap-2 px-4 py-3 text-center transition-colors rounded-lg hover:bg-slate-50"
         >
             <span className="flex items-center justify-center rounded-lg h-14 w-14 bg-slate-200/50 text-cyan-600">
                 <Icon className="w-10 h-10" />
             </span>
             <span className="text-xs font-kantumruy text-slate-600">{label}</span>
         </button>
+    );
+}
+
+function CourseSummary({ course }: { course: CourseCardItem }) {
+    return (
+        <section className="px-4 pt-5 pb-6">
+            <CourseCoverBanner course={course} className="mb-5" />
+
+            <div className="flex items-start gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[#60738d] shadow-sm">
+                    <Code2 className="w-8 h-8" />
+                </div>
+                <div className="min-w-0 pt-1">
+                    <h3 className="text-xl font-semibold truncate text-slate-800">
+                        {course.title}
+                    </h3>
+                    <p className="mt-1 text-base truncate font-kantumruy text-slate-500">
+                        {course.khmerTitle || "ជំនាញបច្ចេកវិទ្យាព័ត៌មាន"}
+                    </p>
+                </div>
+            </div>
+        </section>
     );
 }

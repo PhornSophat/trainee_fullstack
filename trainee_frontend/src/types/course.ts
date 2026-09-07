@@ -1,13 +1,10 @@
-export type CourseLevel = 
-    | "BASIC" 
-    | "INTERMEDIATE" 
-    | "ADVANCED";
+export type CourseLevel = "BASIC" | "INTERMEDIATE" | "ADVANCED";
 
-export type ApprovalStatus = 
-    | "NOT_REQUESTED"
-    | "PENDING"
-    | "APPROVED"
-    | "REJECTED";
+export type ApprovalStatus =
+  | "NOT_REQUESTED"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED";
 
 export type Lesson = {
   id: string | number;
@@ -25,7 +22,7 @@ export type Chapter = {
   lessons: Lesson[];
 };
 
-export type TabType = 
+export type TabType =
   | "General"
   | "Curriculum"
   | "Session"
@@ -69,8 +66,10 @@ export type Course = {
 /** Shape expected from the courses endpoint in your backend. */
 export type CourseCardItem = {
   id: string | number;
+  categoryId?: string | number;
+  categoryName?: string;
   title: string;
-  khmerTitle?: string;            // Added: For localized title
+  khmerTitle?: string; // Added: For localized title
   description?: string;
   imageUrl: string;
   level: CourseLevel;
@@ -80,7 +79,7 @@ export type CourseCardItem = {
   createdAt: string;
   lessons: number;
   tasks: number;
-  quizzes?: number;               // Added: For total homeworks/quizzes count
+  quizzes?: number; // Added: For total homeworks/quizzes count
   instructors: CourseInstructor[];
   isFavorite?: boolean;
   approvalStatus: ApprovalStatus;
@@ -90,12 +89,11 @@ export type CourseCardItem = {
   totalDislikes?: number;
 
   // Detail Page Additions
-  skills?: string[];              // Added: "What you will learn" points
-  keyLessons?: KeyLesson[];       // Added: Key modules/lessons breakdown
+  skills?: string[]; // Added: "What you will learn" points
+  keyLessons?: KeyLesson[]; // Added: Key modules/lessons breakdown
   technologies: CourseTechnology[]; // Added: Tech stack icons and names
-  faqs?: CourseFAQ[];             // Added: Q&A section
+  faqs?: CourseFAQ[]; // Added: Q&A section
 };
-
 
 export type ChatSender = "student" | "instructor";
 
@@ -130,4 +128,3 @@ export type ChatMessage = {
   text: string;
   sentAt: string; // ISO timestamp
 };
-

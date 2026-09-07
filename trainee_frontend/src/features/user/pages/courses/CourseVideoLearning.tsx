@@ -36,8 +36,10 @@ export function CourseVideoLearning() {
   useEffect(() => {
     if (!courseId) return;
     setLoading(true);
+    let isMounted = true;
     getCourseDetails(courseId)
       .then((data) => {
+        if (!isMounted) return;
         setChapters(data);
         // Auto-select first lesson if none selected
         const firstLesson = data[0]?.lessons?.[0];
@@ -52,10 +54,17 @@ export function CourseVideoLearning() {
         }
       })
       .catch((err) => {
+        if (!isMounted) return;
         console.error("Failed to load curriculum:", err);
         setError("Failed to load course curriculum.");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [courseId, location]);
 
   // ── 2. AUTO-EXPAND CHAPTER CONTAINING ACTIVE LESSON ──────────────────

@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import type { CourseCardItem, ApprovalStatus } from '../types/course';
-import { getCourses } from '../services/courseService';
+import { getCourses, updateCourseImageApi, updateCourseApi } from '../services/courseService';
 
 interface CoursesStore {
     courses: CourseCardItem[];
     loaded: boolean;
     loading: boolean;
-    updateCourseImage: (id: string | number, imageUrl: string) => void;
+    updateCourseImage: (id: string | number, imageUrl: string) => Promise<void>;
+    updateCourse: (id: string | number, data: Partial<CourseCardItem>) => Promise<void>;
     setCourses: (c: CourseCardItem[]) => void;
     fetchCourses: () => Promise<void>;
     toggleFavorite: (id: string | number) => void;
@@ -21,10 +22,10 @@ export const useCoursesStore = create<CoursesStore>((set, get) => ({
     setCourses: (c) => set({ courses: c, loaded: true }),
 
     fetchCourses: async () => {
-        if( get().loaded || get().loading ) return;
+        if (get().loaded || get().loading) return;
 
         set({ loading: true });
-        try{
+        try {
             const data = await getCourses();
             set({ courses: data, loaded: true });
         } catch (error) {
@@ -35,18 +36,32 @@ export const useCoursesStore = create<CoursesStore>((set, get) => ({
     },
 
     toggleFavorite: (id: string | number) => set((s) => ({
-        courses: s.courses.map((c) => c.id === id ? { ...c, isFavorite: !c.isFavorite } : c ),
+        courses: s.courses.map((c) => c.id === id ? { ...c, isFavorite: !c.isFavorite } : c),
     })),
 
     setCourseStatus: (id: string | number, status: ApprovalStatus) => set((s) => ({
         courses: s.courses.map((c) =>
-        c.id === id ? { ...c, approvalStatus: status } : c ),
+            c.id === id ? { ...c, approvalStatus: status } : c),
     })),
 
-    updateCourseImage: (id, imageUrl) => 
+    updateCourseImage: async (id: string | number, imageUrl: string) => {
+        // 1. Send update via your service function to NestJS/Postgres
+        await updateCourseImageApi(id, imageUrl);
+
+        // 2. Update local Zustand state once the API call succeeds
         set((s) => ({
-            courses: s.courses.map((c) => 
+            courses: s.courses.map((c) =>
                 c.id === id ? { ...c, imageUrl } : c
             ),
-        })),
+        }));
+    },
+
+    updateCourse: async (id: string | number, data: Partial<CourseCardItem>) => {
+        await updateCourseApi(id, data);
+        set((s) => ({
+            courses: s.courses.map((c) => 
+                c.id === id ? { ...c, ...data } : c
+            ),
+        }))
+    }
 }));
