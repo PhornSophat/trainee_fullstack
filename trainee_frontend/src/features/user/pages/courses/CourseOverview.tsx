@@ -8,6 +8,9 @@ import { useCoursesStore } from "@/store/courseStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { setCourseApproval } from "@/services/courseService";
 import type { ApprovalStatus } from "@/types/course";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { useToastStore } from "@/store/useToastStore";
+import userProfileImg from "@/assets/images/e20220628.jpg";
 
 type CourseOverviewProps = {
     course: CourseCardItem;
@@ -21,11 +24,35 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
     const handleRequest = async () => {
         setIsRequesting(true);
         try {
-            const res = await requestCourseAccess(String(course.id), 'mock-user');
+            const res = await requestCourseAccess(String(course.id), '00000000-0000-0000-0000-000000000001');
             useCoursesStore.getState().setCourseStatus(course.id, res.status);
-            navigate(`/trainee/programs/${course.id}/learning`);
+
+            const categoryName = course.khmerTitle || course.title;
+
+            // Notification for Admin
+            useNotificationStore.getState().addNotification({
+                type: 'COURSE_REQUEST',
+                title: 'សំណើចូលរៀនជំនាញសិក្សា',
+                breadcrumb: `${categoryName} > សំណើ`,
+                message: `សុផាត ផន បានស្នើសុំចូលរៀនវគ្គ ${course.title}`,
+                timeAgo: 'ទើបតែឥឡូវនេះ',
+                senderName: 'សុផាត ផន',
+                avatarUrl: userProfileImg,
+                courseId: course.id,
+                courseTitle: course.title,
+                targetUrl: '/admin/approvals',
+                forRole: 'admin',
+            });
+
+            useToastStore.getState().showToast('សំណើចូលរៀនវគ្គសិក្សាត្រូវបានបញ្ជូន!', 'success');
+
+            if (res.status === 'APPROVED') {
+                navigate(`/trainee/programs/${course.id}/learning`);
+            }
         } catch (err) {
             console.error('Request access failed:', err);
+            useToastStore.getState().showToast('ការស្នើសុំមិនបានជោគជ័យ', 'error');
+        } finally {
             setIsRequesting(false);
         }
     };
@@ -42,7 +69,34 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
     const handleApprove = async ( status: string ) => {
         await setCourseApproval(String(course.id), status);
         useCoursesStore.getState().setCourseStatus(course.id, status as ApprovalStatus);
-        navigate(`/trainee/programs/${course.id}/learning`);
+
+        const isApproved = status === 'APPROVED';
+        const categoryName = course.khmerTitle || course.title;
+
+        useNotificationStore.getState().addNotification({
+            type: isApproved ? 'COURSE_APPROVED' : 'COURSE_REJECTED',
+            title: 'សំណើចូលរៀនជំនាញសិក្សា',
+            breadcrumb: `${categoryName} > សំណើ`,
+            message: isApproved 
+                ? `ខូច គឿន បានអនុម័តសំណើក្នុងការចូលរួម ${course.title}`
+                : `ខូច គឿន បានបដិសេធសំណើក្នុងការចូលរួម ${course.title}`,
+            timeAgo: 'ទើបតែឥឡូវនេះ',
+            senderName: 'ខូច គឿន',
+            avatarUrl: userProfileImg,
+            courseId: course.id,
+            courseTitle: course.title,
+            targetUrl: `/trainee/programs/${course.id}`,
+            forRole: 'user',
+        });
+
+        useToastStore.getState().showToast(
+            isApproved ? 'បានអនុម័តសំណើចូលរៀនជោគជ័យ' : 'បានបដិសេធសំណើចូលរៀន',
+            isApproved ? 'success' : 'warning'
+        );
+
+        if (isApproved) {
+            navigate(`/trainee/programs/${course.id}/learning`);
+        }
     }
 
     return (
@@ -54,8 +108,10 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                     {/* Back Button */}
                     <button
                         type="button"
-                        onClick={() => navigate(-1)}
-                        className="mb-6 transition-colors text-slate-400 hover:text-white"
+                        onClick={() => navigate("/trainee/programs")}
+                        className="mb-6 transition-colors text-slate-400 hover:text-white cursor-pointer"
+                        title="Back to courses"
+                        aria-label="Back to courses"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -68,7 +124,7 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                         <div className="space-y-3 lg:col-span-8">
                             {/* Title */}
                             <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-                                {course.title || "API/Backend Developer"}
+                                {course.title}
                             </h1>
 
                             {/* Khmer Subtitle / Description */}
@@ -78,7 +134,7 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
 
                             {/* English Description */}
                             <p className="text-sm md:text-base text-slate-400">
-                                {course.description || "API/Backend Developer is a practical program with guided lessons, hands-on homework, and support from mentors."}
+                                {course.description}
                             </p>
 
                             {/* Badge, Rating & Metrics */}
@@ -166,22 +222,20 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                             <h2 className="mb-4 text-base font-semibold md:text-lg text-slate-900">
                                 What you will learn
                             </h2>
-                            <div className="space-y-3 text-sm md:text-base text-slate-600">
-                                {(course.skills ?? [
-                                    "យល់ដឹងពីសញ្ញាណ និង workflow សម្រាប់ API/Backend Developer",
-                                    "REST API design, validation, authentication, and permissions",
-                                    "Database modeling, queries, transactions, and caching",
-                                    "Backend testing, documentation, deployment, and monitoring",
-                                    "អនុវត្តគម្រោង និងរបៀបធ្វើការជាក្រុមសម្រាប់ API/Backend Developer",
-                                ]).map((skill, index) => (
-                                    <div key={index} className="flex items-start gap-3">
-                                        <svg className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        <span>{skill}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            {(!course.skills || course.skills.length === 0) ? (
+                                <p className="text-sm text-slate-400 italic">No learning points listed yet.</p>
+                            ) : (
+                                <div className="space-y-3 text-sm md:text-base text-slate-600">
+                                    {course.skills.map((skill, index) => (
+                                        <div key={index} className="flex items-start gap-3">
+                                            <svg className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>{skill}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </section>
 
                         {/* Key Lessons */}
@@ -189,19 +243,23 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                             <h2 className="text-base font-semibold md:text-lg text-slate-900">Key Lessons</h2>
                             <p className="mb-5 text-sm text-slate-400">Define the core foundation of digital system and mobile application development.</p>
 
-                            <div className="space-y-5 text-sm md:text-base">
-                                {(course.keyLessons ?? []).map((lesson, index) => (
-                                    <div key={index} className="flex gap-4">
-                                        <div className="flex items-center justify-center w-10 h-10 text-xs font-bold rounded bg-slate-100 shrink-0 text-slate-500">
-                                            {lesson.code ?? index + 1}
+                            {(!course.keyLessons || course.keyLessons.length === 0) ? (
+                                <p className="text-sm text-slate-400 italic">No key lessons listed yet.</p>
+                            ) : (
+                                <div className="space-y-5 text-sm md:text-base">
+                                    {course.keyLessons.map((lesson, index) => (
+                                        <div key={index} className="flex gap-4">
+                                            <div className="flex items-center justify-center w-10 h-10 text-xs font-bold rounded bg-slate-100 shrink-0 text-slate-500">
+                                                {lesson.code ?? index + 1}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-base font-semibold text-slate-800">{lesson.title}</h3>
+                                                <p className="text-slate-500 text-xs md:text-sm mt-0.5">{lesson.description}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-base font-semibold text-slate-800">{lesson.title}</h3>
-                                            <p className="text-slate-500 text-xs md:text-sm mt-0.5">{lesson.description}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </section>
 
                         {/* Learning Resources */}
@@ -211,41 +269,24 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                                 Used during training or can be used in actual work practice in the future.
                             </p>
 
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                <div className="flex items-center gap-3.5 p-3.5 border border-slate-200/80 rounded-md bg-white">
-                                    <div className="flex items-center justify-center w-8 h-8 text-xs font-bold rounded bg-slate-100 text-slate-500 shrink-0">
-                                        API
-                                    </div>
-                                    <span className="text-sm font-medium text-slate-700">API contract examples</span>
+                            {(!course.learningResources || course.learningResources.length === 0) ? (
+                                <p className="text-sm text-slate-400 italic">No learning resources listed yet.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                    {course.learningResources.map((item, index) => (
+                                        <div key={index} className="flex items-center gap-3.5 p-3.5 border border-slate-200/80 rounded-md bg-white">
+                                            <div className="flex items-center justify-center w-8 h-8 text-xs font-bold rounded bg-slate-100 text-slate-500 shrink-0">
+                                                {item.icon === 'code' ? 'API' : (
+                                                    <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-700">{item.title}</span>
+                                        </div>
+                                    ))}
                                 </div>
-
-                                <div className="flex items-center gap-3.5 p-3.5 border border-slate-200/80 rounded-md bg-white">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded bg-slate-100 text-slate-500 shrink-0">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                                        </svg>
-                                    </div>
-                                    <span className="text-sm font-medium text-slate-700">Database schema guide</span>
-                                </div>
-
-                                <div className="flex items-center gap-3.5 p-3.5 border border-slate-200/80 rounded-md bg-white">
-                                    <div className="flex items-center justify-center w-8 h-8 text-orange-600 bg-orange-100 rounded shrink-0">
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                                        </svg>
-                                    </div>
-                                    <span className="text-sm font-medium text-slate-700">Postman collection</span>
-                                </div>
-
-                                <div className="flex items-center gap-3.5 p-3.5 border border-slate-200/80 rounded-md bg-white">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded bg-slate-100 text-slate-500 shrink-0">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                        </svg>
-                                    </div>
-                                    <span className="text-sm font-medium text-slate-700">Backend deployment checklist</span>
-                                </div>
-                            </div>
+                            )}
                         </section>
 
                         {/* Technologies */}
@@ -257,41 +298,58 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                                 </p>
                             </div>
 
-                            <div className="flex flex-wrap items-center justify-center gap-3">
-                                {(course.technologies || []).map((tech) => (
-                                    <div key={tech.name} className="relative group">
-                                        <div className="flex items-center justify-center w-[72px] h-[72px] p-2 rounded-xl bg-slate-50 border border-slate-200/70 shadow-2xs hover:bg-white hover:border-blue-500/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                                            <img
-                                                src={tech.icon}
-                                                alt={tech.name}
-                                                className="object-contain w-full h-full transition-transform duration-200 filter drop-shadow-xs group-hover:scale-105"
-                                            />
-                                        </div>
+                            {(!course.technologies || course.technologies.length === 0) ? (
+                                <p className="text-sm text-slate-400 italic">No technologies listed yet.</p>
+                            ) : (
+                                <div className="flex flex-wrap items-center justify-center gap-3">
+                                    {course.technologies.map((tech) => (
+                                        <div key={tech.name} className="relative group">
+                                            <div className="flex items-center justify-center w-[72px] h-[72px] p-2 rounded-xl bg-slate-50 border border-slate-200/70 shadow-2xs hover:bg-white hover:border-blue-500/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                                                {tech.icon ? (
+                                                    <img
+                                                        src={tech.icon}
+                                                        alt={tech.name}
+                                                        className="object-contain w-full h-full transition-transform duration-200 filter drop-shadow-xs group-hover:scale-105"
+                                                        onError={(e) => {
+                                                            (e.currentTarget as HTMLElement).style.display = "none";
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <span className="text-xs font-bold text-slate-700">
+                                                        {tech.name.slice(0, 3).toUpperCase()}
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                        {/* Tooltip */}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-medium rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none z-20 translate-y-1 group-hover:translate-y-0">
-                                            {tech.name}
-                                            <div className="absolute -translate-x-1/2 border-4 border-transparent top-full left-1/2 border-t-slate-900" />
+                                            {/* Tooltip */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-medium rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none z-20 translate-y-1 group-hover:translate-y-0">
+                                                {tech.name}
+                                                <div className="absolute -translate-x-1/2 border-4 border-transparent top-full left-1/2 border-t-slate-900" />
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </section>
 
                         {/* Q&A Accordion Section */}
                         <section className="p-6 bg-white border rounded-md shadow-sm border-slate-200/60">
                             <h2 className="mb-4 text-base font-semibold md:text-lg text-slate-900">Q&A</h2>
 
-                            <div className="space-y-3">
-                                {(course.faqs ?? []).map((faq, i) => (
-                                    <div key={i} className="flex items-center justify-between p-3.5 border border-slate-100 rounded bg-slate-50/50 hover:bg-slate-50 cursor-pointer">
-                                        <span className="text-sm font-medium text-slate-700">{faq.question}</span>
-                                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </div>
-                                ))}
-                            </div>
+                            {(!course.faqs || course.faqs.length === 0) ? (
+                                <p className="text-sm text-slate-400 italic">No Q&A listed yet.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {course.faqs.map((faq, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3.5 border border-slate-100 rounded bg-slate-50/50 hover:bg-slate-50 cursor-pointer">
+                                            <span className="text-sm font-medium text-slate-700">{faq.question}</span>
+                                            <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </section>
 
                         {/* Other Courses Section */}
@@ -358,28 +416,28 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                                         <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                         </svg>
-                                        <span>{course.lessons ?? 6} Lessons</span>
+                                        <span>{course.lessons ?? 0} Lessons</span>
                                     </div>
 
                                     <div className="flex items-center gap-3">
                                         <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                         </svg>
-                                        <span>6 Videos</span>
+                                        <span>{course.lessons ?? 0 } Videos</span>
                                     </div>
 
                                     <div className="flex items-center gap-3">
                                         <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                         </svg>
-                                        <span>{course.quizzes ?? 9} Homeworks</span>
+                                        <span>{((course.quizzes ?? 0) + (course.tasks ?? 0))} Homeworks</span>
                                     </div>
 
                                     <div className="flex items-center gap-3">
                                         <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                                         </svg>
-                                        <span>4 Resources</span>
+                                        <span>{course.learningResources?.length ?? 0} Resources</span>
                                     </div>
 
                                     <div className="flex items-center gap-3">
@@ -387,7 +445,7 @@ export const CourseOverview = ({ course }: CourseOverviewProps) => {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        <span>0 Support Mentors</span>
+                                        <span>{course.instructors?.length ?? 0} Support Mentors</span>
                                     </div>
 
                                     <div className="flex items-center gap-3">

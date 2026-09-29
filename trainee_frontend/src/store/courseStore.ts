@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { CourseCardItem, ApprovalStatus } from '../types/course';
-import { getCourses, updateCourseImageApi, updateCourseApi } from '../services/courseService';
+import { getCourses, updateCourseImageApi, updateCourseApi, createCourseApi, deleteCourseApi } from '../services/courseService';
 
 interface CoursesStore {
     courses: CourseCardItem[];
@@ -9,9 +9,18 @@ interface CoursesStore {
     updateCourseImage: (id: string | number, imageUrl: string) => Promise<void>;
     updateCourse: (id: string | number, data: Partial<CourseCardItem>) => Promise<void>;
     setCourses: (c: CourseCardItem[]) => void;
-    fetchCourses: () => Promise<void>;
+    fetchCourses: (force?: boolean) => Promise<void>;
     toggleFavorite: (id: string | number) => void;
     setCourseStatus: (id: string | number, status: ApprovalStatus) => void;
+    createCourse: (data: {
+    title: string;
+    khmerTitle: string;
+    categoryId?: number;
+    level: string;
+    description?: string;
+    imageUrl?: string;
+    }) => Promise<CourseCardItem>;
+    deleteCourse: (id: string | number) => Promise<void>;
 }
 
 export const useCoursesStore = create<CoursesStore>((set, get) => ({
@@ -21,8 +30,8 @@ export const useCoursesStore = create<CoursesStore>((set, get) => ({
 
     setCourses: (c) => set({ courses: c, loaded: true }),
 
-    fetchCourses: async () => {
-        if (get().loaded || get().loading) return;
+    fetchCourses: async (force = false) => {
+        if (!force && (get().loaded || get().loading)) return;
 
         set({ loading: true });
         try {
@@ -60,8 +69,46 @@ export const useCoursesStore = create<CoursesStore>((set, get) => ({
         await updateCourseApi(id, data);
         set((s) => ({
             courses: s.courses.map((c) => 
-                c.id === id ? { ...c, ...data } : c
+                String(c.id) === String(id) ? { ...c, ...data } : c
             ),
         }))
-    }
+    },
+
+    createCourse: async (data) => {
+        const res = await createCourseApi(data);
+        const newCourse: CourseCardItem = {
+            id: res.course?.id || Date.now(),
+            title: data.title,
+            khmerTitle: data.khmerTitle,
+            categoryId: data.categoryId,
+            level: data.level as any,
+            description: data.description || '',
+            imageUrl: data.imageUrl || '',
+            duration: '0h',
+            lessons: 0,
+            tasks: 0,
+            quizzes: 0,
+            rating: 0,
+            reviewCount: 0,
+            instructors: [],
+            approvalStatus: (res.course?.approved_status || res.course?.approval_status || 'NOT_REQUESTED') as ApprovalStatus,
+            createdAt: new Date().toISOString(),
+            technologies: [],
+            skills: [],
+            keyLessons: [],
+            faqs: [],
+            learningResources: [],
+        };
+        set((s) => ({
+            courses: [newCourse, ...s.courses],
+        }));
+        return newCourse;
+    },
+
+    deleteCourse: async (id: string | number) => {
+        await deleteCourseApi(id);
+        set((s) => ({
+            courses: s.courses.filter((c) => String(c.id) !== String(id)),
+        }));
+    },
 }));

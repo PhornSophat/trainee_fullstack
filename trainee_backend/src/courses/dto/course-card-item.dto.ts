@@ -6,6 +6,7 @@ import { InstructorDto } from './instructor.dto';
 import { TechnologyDto } from './technology.dto';
 import { KeyLessonDto } from './key-lesson.dto';
 import { FaqDto } from './faq.dto';
+import { LearningResourceDto } from './learning-resource.dto';
 
 export class CourseCardItemDto {
   @Expose() id!: number;
@@ -36,8 +37,16 @@ export class CourseCardItemDto {
   createdAt!: Date;
 
   @Expose()
+  @Transform(({ obj }) => (obj.categories?.[0]?.id ? Number(obj.categories[0].id) : null))
+  categoryId!: number | null;
+
+  @Expose()
+  @Transform(({ obj }) => obj.categories?.[0]?.name ?? null)
+  categoryName!: string | null;
+
+  @Expose({ name: 'instructors' })
   @Type(() => InstructorDto)
-  instructor!: InstructorDto[];
+  instructors!: InstructorDto[];
 
   @Expose()
   @Transform(({ value }) => (value ?? []).map((s: any) => s.text))
@@ -54,6 +63,10 @@ export class CourseCardItemDto {
   @Expose()
   @Type(() => FaqDto)
   faqs!: FaqDto[];
+
+  @Expose()
+  @Type(() => LearningResourceDto)
+  learningResources!: LearningResourceDto[];
 
   @Expose() rating!: number;
   @Expose() reviewCount!: number;

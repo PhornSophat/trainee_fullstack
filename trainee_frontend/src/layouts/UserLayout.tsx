@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import MainSidebar from "@/components/main-sidebar/MainSidebar";
 import { Header } from "./Header";
+import { CourseRequestDrawer } from "@/components/courses/CourseRequestDrawer";
+import { GlobalHomeworkDrawer } from "@/components/courses/GlobalHomeworkDrawer";
 
 export function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,6 +22,12 @@ export function UserLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Global Course Request Approval Drawer */}
+      <CourseRequestDrawer />
+
+      {/* Global Homework Task Drawer */}
+      <GlobalHomeworkDrawer />
     </div>
   );
 }

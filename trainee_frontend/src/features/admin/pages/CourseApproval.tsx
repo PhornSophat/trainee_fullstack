@@ -1,15 +1,17 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useCoursesStore } from "@/store/courseStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { setCourseApproval } from "@/services/courseService";
 import type { ApprovalStatus } from "@/types/course";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { useToastStore } from "@/store/useToastStore";
+import { useCourseRequestDrawerStore } from "@/store/useCourseRequestDrawerStore";
 
 export function CourseApproval() {
   const courses = useCoursesStore((s) => s.courses);
   const fetchCourses = useCoursesStore((s) => s.fetchCourses);
   const role = useAuthStore((s) => s.role);
-  const navigate = useNavigate();
+  const openDrawer = useCourseRequestDrawerStore((s) => s.openDrawer);
 
   useEffect(() => { fetchCourses(); }, [fetchCourses]);
 
@@ -18,6 +20,32 @@ export function CourseApproval() {
   const handleDecision = async (id: string | number, status: ApprovalStatus) => {
     await setCourseApproval(id, status);
     useCoursesStore.getState().setCourseStatus(id, status);
+
+    const targetCourse = courses.find((c) => String(c.id) === String(id));
+    const courseTitle = targetCourse?.title || `Course #${id}`;
+    const courseCategoryKhmer = targetCourse?.khmerTitle || courseTitle;
+    const isApproved = status === "APPROVED";
+
+    useNotificationStore.getState().addNotification({
+      type: isApproved ? "COURSE_APPROVED" : "COURSE_REJECTED",
+      title: "សំណើចូលរៀនជំនាញសិក្សា",
+      breadcrumb: `${courseCategoryKhmer} > សំណើ`,
+      message: isApproved
+        ? `ខូច គឿន បានអនុម័តសំណើក្នុងការចូលរួម ${courseTitle}`
+        : `ខូច គឿន បានបដិសេធសំណើក្នុងការចូលរួម ${courseTitle}`,
+      timeAgo: "ទើបតែឥឡូវនេះ",
+      senderName: "ខូច គឿន",
+      avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+      courseId: id,
+      courseTitle: courseTitle,
+      targetUrl: `/trainee/programs/${id}`,
+      forRole: "all",
+    });
+
+    useToastStore.getState().showToast(
+      isApproved ? "បានអនុម័តសំណើជោគជ័យ!" : "បានបដិសេធសំណើ!",
+      isApproved ? "success" : "warning"
+    );
   };
 
   if (role !== "admin") {
@@ -59,10 +87,21 @@ export function CourseApproval() {
                   Reject
                 </button>
                 <button
-                  onClick={() => navigate(`/trainee/programs/${c.id}`)}
-                  className="rounded border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+                  onClick={() =>
+                    openDrawer({
+                      courseId: c.id,
+                      courseTitle: c.title,
+                      courseKhmerTitle: c.khmerTitle,
+                      courseLevel: c.level,
+                      courseLessons: c.lessons,
+                      courseTasks: c.tasks,
+                      courseImageUrl: c.imageUrl,
+                      approvalStatus: c.approvalStatus,
+                    })
+                  }
+                  className="rounded border border-slate-200 px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
-                  View
+                  View Request
                 </button>
               </div>
             </li>

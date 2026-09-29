@@ -161,21 +161,21 @@ INSERT INTO course_faqs (course_id, question, answer, position) VALUES
 -- CHAPTERS (ids 1-3, for course 1)
 -- ============================================================
 INSERT INTO chapters (course_id, title, position) VALUES
-(1, 'Chapter 1: Getting Started', 1),
-(1, 'Chapter 2: Core Concepts Deep Dive', 2),
-(1, 'Chapter 3: Advanced Optimization', 3);
+(1, 'ជំពូកទី ១៖ ការចាប់ផ្តើម', 1),
+(1, 'ជំពូកទី ២៖ ការសិក្សាស្វែងយល់ពីគោលការណ៍គ្រឹះ', 2),
+(1, 'ជំពូកទី ៣៖ ការបង្កើនប្រសិទ្ធភាពកម្រិតខ្ពស់', 3);
 
 -- ============================================================
 -- LESSONS (ids 1-7). Mux IDs stay NULL until you upload via Mux.
 -- ============================================================
 INSERT INTO lessons (chapter_id, title, description, type, duration, video_url, mux_asset_id, mux_playback_id, position) VALUES
-(1, '1. Course Overview & Setup', NULL, 'VIDEO', '05:20', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', NULL, NULL, 1),
-(1, '2. Setting up the Development Workspace', NULL, 'VIDEO', '10:15', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', NULL, NULL, 2),
-(2, '3. Understanding State & Props', NULL, 'VIDEO', '12:00', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', NULL, NULL, 1),
-(2, '4. Lifecycle & Effect Hooks', NULL, 'VIDEO', '08:45', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', NULL, NULL, 2),
-(2, '5. State Management Best Practices', NULL, 'VIDEO', '15:00', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', NULL, NULL, 3),
-(3, '6. Performance Profiling', NULL, 'VIDEO', '06:30', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoylikes.mp4', NULL, NULL, 1),
-(3, '7. Building for Production', NULL, 'VIDEO', '11:20', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4', NULL, NULL, 2);
+(1, '១. ទិដ្ឋភាពទូទៅនៃវគ្គសិក្សា និងការរៀបចំ', NULL, 'VIDEO', '05:20', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', NULL, NULL, 1),
+(1, '២. ការរៀបចំបរិស្ថានការងារអភិវឌ្ឍន៍ (Workspace)', NULL, 'VIDEO', '10:15', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', NULL, NULL, 2),
+(2, '១. ការយល់ដឹងអំពី State & Props', NULL, 'VIDEO', '12:00', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', NULL, NULL, 1),
+(2, '២. Lifecycle & Effect Hooks', NULL, 'VIDEO', '08:45', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', NULL, NULL, 2),
+(2, '៣. វិធីសាស្ត្រល្អៗក្នុងការគ្រប់គ្រង State (State Management)', NULL, 'VIDEO', '15:00', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', NULL, NULL, 3),
+(3, '១. ការវាស់វែង និងពិនិត្យមើលប្រសិទ្ធភាព (Performance Profiling)', NULL, 'VIDEO', '06:30', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoylikes.mp4', NULL, NULL, 1),
+(3, '២. ការបង្កើត និងដាក់ឱ្យដំណើរការ Production (Building for Production)', NULL, 'VIDEO', '11:20', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4', NULL, NULL, 2);
 
 -- ============================================================
 -- HOMEWORK (ids 1-2) + TASKS (ids 1-3), all for course 1

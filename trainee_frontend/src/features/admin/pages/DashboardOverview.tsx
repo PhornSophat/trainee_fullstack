@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import userProfileImg from "@/assets/images/e20220628.jpg";
 
 const weeklyVisits = [112, 114, 108, 129, 138, 96, 111];
 const monthlyUsers = [0, 0, 0, 0, 0, 0, 0, 0, 0, 34, 24, 0];
@@ -33,7 +34,11 @@ export default function DashboardOverview() {
     <div className="min-h-full bg-[#edf2f6] p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dce8f0] text-lg font-bold text-[#1e2b3f]">AD</div>
+          <img
+            src={userProfileImg}
+            alt="Administrator"
+            className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-200 shadow-sm"
+          />
           <div><h2 className="text-xl font-bold text-[#1e2b3f]">Administrator dashboard</h2><p className="text-sm text-slate-500">Training platform overview</p></div>
         </div>
         <button className="flex items-center gap-2 rounded-xl bg-[#078baa] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#007792]"><Download className="w-4 h-4" /> Download report</button>

@@ -14,6 +14,8 @@ import { CourseSkill } from './course-skill.entity';
 import { CourseTechnology } from './course-technology.entity';
 import { KeyLesson } from './key-lesson.entity';
 import { CourseFaq } from './course-faqs.entity';
+import { CourseLearningResource } from './course-learning-resource.entity';
+import { Category } from '../../categories/entities/category.entity';
 
 @Entity('courses')
 export class Course {
@@ -67,4 +69,19 @@ export class Course {
     cascade: true,
   })
   faqs!: CourseFaq[];
+
+  @OneToMany(
+    () => CourseLearningResource,
+    (resource: CourseLearningResource) => resource.course,
+    { cascade: true },
+  )
+  learningResources!: CourseLearningResource[];
+
+  @ManyToMany(() => Category, { eager: false })
+  @JoinTable({
+    name: 'course_categories',
+    joinColumn: { name: 'course_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
+  })
+  categories!: Category[];
 }

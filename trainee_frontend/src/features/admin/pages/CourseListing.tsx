@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     BookOpen,
     BarChart3,
@@ -13,6 +13,11 @@ import {
     Star,
     ArrowUpDown,
     Code2,
+    MoreVertical,
+    Eye,
+    Trash2,
+    AlertTriangle,
+    Loader2,
 } from "lucide-react";
 import { useCoursesStore } from "@/store/courseStore";
 import { CourseDetailDrawer } from "@/features/admin/components/CourseDetailDrawer";
@@ -20,6 +25,7 @@ import type {
     CourseCardItem,
     CourseLevel,
 } from "@/types/course";
+import { CreateProgramDrawer } from "../components/CreateProgramDrawer";
 
 const levelLabels: Record<CourseLevel, string> = {
     BASIC: "Beginner",
@@ -32,6 +38,7 @@ const levelStyles: Record<CourseLevel, string> = {
     INTERMEDIATE: "bg-amber-100 text-amber-600",
     ADVANCED: "bg-rose-100 text-rose-500",
 };
+
 
 export function CourseListing() {
     const courses = useCoursesStore((state) => state.courses);
@@ -46,6 +53,24 @@ export function CourseListing() {
     const [openFilter, setOpenFilter] = useState<"level" | "category" | null>(null);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState<CourseCardItem | null>(null);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [courseToDelete, setCourseToDelete] = useState<CourseCardItem | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const deleteCourse = useCoursesStore((state) => state.deleteCourse);
+
+    const handleConfirmDelete = async () => {
+        if (!courseToDelete) return;
+        try {
+            setIsDeleting(true);
+            await deleteCourse(courseToDelete.id);
+            setCourseToDelete(null);
+        } catch (error) {
+            console.error("Failed to delete course:", error);
+            alert("បរាជ័យក្នុងការលុបវគ្គសិក្សា");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const categoryOptions = ["Web", "Mobile", "DevOps", "Cyber", "UX/UI"];
 
@@ -146,7 +171,8 @@ export function CourseListing() {
                                 type="button"
                                 title="Create course"
                                 aria-label="Create course"
-                                className="rounded-lg border border-slate-200 p-2.5 text-[#60738d] hover:bg-slate-50"
+                                onClick={() => setIsCreateOpen(true)}
+                                className="rounded-lg border border-slate-200 p-2.5 text-[#60738d] hover:bg-slate-50 transition-colors"
                             >
                                 <Plus className="w-5 h-5" />
                             </button>
@@ -281,7 +307,11 @@ export function CourseListing() {
                     {/* Course table or grid */}
                     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
                         {view === "list" ? (
-                            <CourseTable courses={filteredCourses} onSelect={setSelectedCourse} />
+                            <CourseTable
+                                courses={filteredCourses}
+                                onSelect={setSelectedCourse}
+                                onDelete={setCourseToDelete}
+                            />
                         ) : (
                             <CourseGrid courses={filteredCourses} onSelect={setSelectedCourse} />
                         )}
@@ -297,6 +327,25 @@ export function CourseListing() {
                     isOpen={selectedCourse !== null}
                     onClose={() => setSelectedCourse(null)}
                 />
+
+                <CreateProgramDrawer
+                    isOpen={isCreateOpen}
+                    onClose={() => setIsCreateOpen(false)}
+                    onSuccess={(newCourseId) => {
+                        // Grab latest courses from the store and auto-open the new course drawer
+                        const latestCourses = useCoursesStore.getState().courses;
+                        const created = latestCourses.find((c) => c.id === newCourseId);
+                        if (created) setSelectedCourse(created);
+                    }}
+                />
+
+                <DeleteConfirmModal
+                    course={courseToDelete}
+                    isOpen={courseToDelete !== null}
+                    onClose={() => setCourseToDelete(null)}
+                    onConfirm={handleConfirmDelete}
+                    isDeleting={isDeleting}
+                />
             </div>
         </div>
     );
@@ -305,9 +354,11 @@ export function CourseListing() {
 function CourseTable({
     courses,
     onSelect,
+    onDelete,
 }: {
     courses: CourseCardItem[];
     onSelect: (course: CourseCardItem) => void;
+    onDelete: (course: CourseCardItem) => void;
 }) {
     if (courses.length === 0) {
         return (
@@ -363,6 +414,7 @@ function CourseTable({
                                 course={course}
                                 index={index}
                                 onSelect={onSelect}
+                                onDelete={onDelete}
                             />
                         ))}
                     </tbody>
@@ -376,12 +428,32 @@ function CourseRow({
     course,
     index,
     onSelect,
+    onDelete,
 }: {
     course: CourseCardItem;
     index: number;
     onSelect: (course: CourseCardItem) => void;
+    onDelete: (course: CourseCardItem) => void;
 }) {
     const filledStars = Math.round(course.rating);
+
+    //state to track if this row's menu is open
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    //click outside listener to close menu the popup menu
+    useEffect(() => {
+        if (!isMenuOpen) return;
+
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsMenuOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isMenuOpen]);
 
     return (
         <tr
@@ -471,32 +543,78 @@ function CourseRow({
                 </div>
             </td>
 
-            <td className="px-4 py-3">
-                <div className="flex -space-x-2">
-                    {course.instructors.slice(0, 4).map((instructor) =>
-                        instructor.avatarUrl ? (
-                            <img
-                                key={instructor.id}
-                                src={instructor.avatarUrl}
-                                alt={instructor.name}
-                                title={instructor.name}
-                                className="object-cover border-2 border-white rounded-full h-7 w-7"
-                            />
-                        ) : (
-                            <span
-                                key={instructor.id}
-                                title={instructor.name}
-                                className="flex items-center justify-center text-xs text-white border-2 border-white rounded-full h-7 w-7 bg-slate-500"
-                            >
-                                {instructor.name.charAt(0)}
-                            </span>
-                        ),
+           <td className="px-4 py-3">
+                <div className="flex -space-x-2 items-center">
+                    {course.instructors.slice(0, 4).map((instructor) => (
+                        <img
+                            key={instructor.id}
+                            src={instructor.avatarUrl}
+                            alt={instructor.name}
+                            className="object-cover border-2 border-white rounded-full h-7 w-7"
+                        />
+                    ))}
+                    {/* If more than 4 instructors, show +N */}
+                    {course.instructors.length > 4 && (
+                        <span className="flex items-center justify-center text-[11px] font-semibold text-white border-2 border-white rounded-full h-7 w-7 bg-[#475569]">
+                            +{course.instructors.length - 4}
+                        </span>
                     )}
                 </div>
             </td>
 
             <td className="px-4 py-3 text-slate-500">
-                {course.duration}
+                <div className="flex items-center justify-between relative" ref={menuRef}>
+                    <span className="text-[#3b82f6] font-medium">
+                        {course.duration}
+                    </span>
+                    <button 
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsMenuOpen((prev) => !prev);
+                        }}
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                        title="Action"
+                    >
+                        <MoreVertical className="w-4 h-4" />
+                    </button>
+
+                    {/* Popup menu */}
+                    {
+                        isMenuOpen && (
+                            <div
+                                onClick={(e) => e.stopPropagation()} // prevent row clicking
+                                className="absolute right-0 top-8 z-30 w-36 py-1.5 bg-white rounded-xl shadow-xl border border-slate-100 flex flex-col"
+                            >
+                                {/* menu options */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsMenuOpen(false);
+                                        onSelect(course);
+                                    }}
+                                    className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors w-full text-left"
+                                >
+                                    <Eye className="w-4 h-4 text-slate-500" />
+                                    <span>View</span>
+                                </button>
+
+                                {/* delete option */}
+                                <button
+                                type="button"
+                                onClick={() => {
+                                    setIsMenuOpen(false);
+                                    onDelete(course); // Triggers delete confirmation
+                                }}
+                                className="flex items-center gap-2.5 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left"
+                            >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                                <span>Delete</span>
+                            </button>
+                            </div>
+                        )
+                    }
+                </div>
             </td>
         </tr>
     );
@@ -564,6 +682,86 @@ function CourseGrid({
                     </div>
                 </article>
             ))}
+        </div>
+    );
+}
+
+function DeleteConfirmModal({
+    course,
+    isOpen,
+    onClose,
+    onConfirm,
+    isDeleting,
+}: {
+    course: CourseCardItem | null;
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => Promise<void>;
+    isDeleting: boolean;
+}) {
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, onClose]);
+
+    if (!isOpen || !course) return null;
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150 font-kantumruy"
+            onClick={onClose}
+        >
+            <div
+                className="w-full max-w-md p-6 text-center bg-white border shadow-2xl rounded-2xl border-slate-100 animate-in zoom-in-95 duration-150"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 border rounded-full bg-rose-50 border-rose-100 text-rose-500">
+                    <AlertTriangle className="w-7 h-7" />
+                </div>
+
+                <h3 className="text-lg font-bold text-slate-800 mb-1.5">
+                    លុបវគ្គសិក្សា? (Delete Course)
+                </h3>
+
+                <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                    តើអ្នកពិតជាចង់លុបវគ្គសិក្សា{" "}
+                    <span className="font-semibold text-slate-800">
+                        "{course.title}"
+                    </span>{" "}
+                    មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <button
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={onClose}
+                        className="px-4 py-2.5 text-sm font-medium border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    >
+                        បោះបង់ (Cancel)
+                    </button>
+
+                    <button
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={onConfirm}
+                        className="px-4 py-2.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-75"
+                    >
+                        {isDeleting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>កំពុងលុប...</span>
+                            </>
+                        ) : (
+                            <span>លុប (Delete)</span>
+                        )}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

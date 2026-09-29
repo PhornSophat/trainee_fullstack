@@ -13,6 +13,7 @@ export class KeyLesson {
   @Column({ nullable: true }) code!: string;
   @Column() title!: string;
   @Column({ nullable: true }) description!: string;
+  @Column({ name: 'image_url', nullable: true }) imageUrl?: string;
   @Column({ default: 0 }) position!: number;
   @ManyToOne(() => Course, (c) => c.keyLessons, {
     onDelete: 'CASCADE',

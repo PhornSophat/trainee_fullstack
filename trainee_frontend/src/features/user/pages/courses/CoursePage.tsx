@@ -42,6 +42,6 @@ export function CoursePage() {
   if (!course) return <div className="p-8 text-center">Course not found</div>;
 
   return course.approvalStatus === "APPROVED"
-    ? <CourseLearning courseId={courseId} />
+    ? <CourseLearning courseId={courseId} course={course} />
     : <CourseOverview course={course} />;
 }

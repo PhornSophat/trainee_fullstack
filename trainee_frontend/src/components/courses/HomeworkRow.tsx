@@ -8,22 +8,48 @@ type HomeworkRowProps = {
     onTaskClick?: (task: HomeworkTask) => void;
 };
 
+const getTaskProgressPercentage = (status?: string): number => {
+    switch (status) {
+        case "GRADED":
+        case "បញ្ចប់":
+        case "DONE":
+        case "COMPLETED":
+            return 100;
+        case "SUBMITTED":
+        case "ស្នើពិនិត្យ":
+            return 50;
+        case "DOING":
+        case "កំពុងធ្វើ":
+        case "IN_PROGRESS":
+            return 25;
+        case "NOT_SUBMITTED":
+        case "កិច្ចការថ្មី":
+        case "LATE":
+        case "យឺតយ៉ាវ":
+        default:
+            return 0;
+    }
+};
+
 export function HomeworkRow({ homework, index, onTaskClick }: HomeworkRowProps) {
 
     const [ isExpanded, setIsExpanded ] = useState(false);
 
     const tasks = homework.tasks || [];
-    const gradedCount = tasks.filter((task) => task.status === "GRADED").length;
-    const progress = tasks.length > 0 ? Math.round((gradedCount / tasks.length) * 100 ) : 0;
+    const totalProgress = tasks.reduce(
+        (sum, task) => sum + getTaskProgressPercentage(task.status),
+        0
+    );
+    const progress = tasks.length > 0 ? Math.round(totalProgress / tasks.length) : 0;
 
   return (
     <div className="transition-colors bg-white">
         <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="grid items-center w-full grid-cols-12 px-8 py-4 text-sm text-left transition-colors cursor-pointer hover:bg-slate-50 "
+            className="grid items-center w-full grid-cols-12 px-8 py-4 text-base font-normal text-left transition-colors cursor-pointer hover:bg-slate-50"
         >
-            <div className="col-span-1 font-normal text-slate-400">
+            <div className="col-span-1 text-base font-normal text-slate-400">
                 {index + 1}
             </div>   
             <div className="flex items-center col-span-6 gap-2 pr-4">
@@ -38,12 +64,12 @@ export function HomeworkRow({ homework, index, onTaskClick }: HomeworkRowProps) 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                 </svg>
                 <div className="min-w-0">
-                    <span className="font-medium text-slate-800 ">
+                    <span className="text-base font-normal text-slate-900 font-kantumruy">
                         {homework.title}
                     </span>
                     {
                         homework.description && (
-                            <p className="text-xs truncate text-slate-400 ">
+                            <p className="text-xs truncate text-slate-500 font-normal">
                                 {homework.description}
                             </p>
                         )
@@ -51,7 +77,7 @@ export function HomeworkRow({ homework, index, onTaskClick }: HomeworkRowProps) 
                 </div>
             </div>
 
-            <div className="col-span-1 text-xs text-slate-500">
+            <div className="col-span-2 text-sm font-normal text-slate-500">
                 {tasks.length} tasks
             </div>
                     
@@ -68,7 +94,7 @@ export function HomeworkRow({ homework, index, onTaskClick }: HomeworkRowProps) 
                         style={{ width: `${progress}%` }}
                     />
                  </div>
-                 <span className="text-xs font-semibold text-slate-600 min-w-[36px] text-right font-mono">
+                 <span className="text-sm font-normal text-slate-600 min-w-[36px] text-right font-mono">
                     {progress}%
                  </span>
             </div>

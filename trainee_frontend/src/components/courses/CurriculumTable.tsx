@@ -32,7 +32,7 @@ export function CurriculumTable({
 
   return (
     <div className="w-full bg-white text-slate-700">
-      <div className="sticky top-0 z-10 grid grid-cols-12 px-8 py-4 text-xs font-semibold bg-white border-b border-slate-200 text-slate-900">
+      <div className="sticky top-0 z-10 grid grid-cols-12 px-8 py-4 text-sm font-normal bg-white border-b border-slate-200 text-slate-600">
         <div className="col-span-1">No.</div>
         <div className="col-span-5">Chapter</div>
         <div className="col-span-2">Lesson</div>

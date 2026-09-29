@@ -6,14 +6,27 @@ export type ApprovalStatus =
   | "APPROVED"
   | "REJECTED";
 
+export type LessonDocument = {
+  id: number | string;
+  lessonId?: number | string;
+  title: string;
+  fileUrl: string;
+  fileType?: string;
+  fileSize?: string;
+  createdAt?: string;
+};
+
 export type Lesson = {
   id: string | number;
   title: string;
+  description?: string;
   duration?: string;
   type: "video" | "doc";
   progressPercentage?: number;
+  lastPositionSeconds?: number;
   videoUrl: string;
   playbackId?: string;
+  documents?: LessonDocument[];
 };
 
 export type Chapter = {
@@ -39,6 +52,7 @@ export type KeyLesson = {
   code?: string;
   title: string;
   description: string;
+  imageUrl?: string;
 };
 
 export type CourseTechnology = {
@@ -51,9 +65,18 @@ export type CourseFAQ = {
   answer?: string;
 };
 
+export type LearningResource = {
+  id?: number;
+  title: string;
+  url?: string;
+  icon?: string;
+  position?: number;
+};
+
 /** API Progress update payload */
 export type ProgressUpdateRequest = {
   progressPercentage: number;
+  lastPositionSeconds?: number;
 };
 
 /** Core Course entity including nested chapters */
@@ -93,6 +116,7 @@ export type CourseCardItem = {
   keyLessons?: KeyLesson[]; // Added: Key modules/lessons breakdown
   technologies: CourseTechnology[]; // Added: Tech stack icons and names
   faqs?: CourseFAQ[]; // Added: Q&A section
+  learningResources?: LearningResource[]; // Added: Supplementary learning resources
 };
 
 export type ChatSender = "student" | "instructor";

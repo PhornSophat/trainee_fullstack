@@ -1,23 +1,41 @@
 import { useEffect, useState, type JSX } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { Homework, HomeworkTask, Chapter, TabType } from "@/types/course";
+import type { Homework, HomeworkTask, Chapter, TabType, CourseCardItem } from "@/types/course";
 import { CurriculumTable } from "@/components/courses/CurriculumTable";
 import { getCourseDetails } from "@/services/courseService";
 import { mockCourseData } from "@/data/courses.mock";
 import { getHomeworks } from "@/services/homeworkService";
 import { HomeworkTable } from "@/components/courses/HomeworkTable";
 import { HomeworkTaskDialog } from "@/components/courses/HomeworkTaskDialog";
+import { useCoursesStore } from "@/store/courseStore";
 
 type CourseLearningProps = {
   courseId?: string | number;
+  course?: CourseCardItem | null;
 };
 
-export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) {
+export function CourseLearning({ courseId: propCourseId, course: propCourse }: CourseLearningProps) {
   const navigate = useNavigate();
   const { courseId: paramCourseId } = useParams();
 
   // Resolve effective course ID from props or URL params
   const activeCourseId = propCourseId || paramCourseId || "1";
+
+  const allCourses = useCoursesStore((s) => s.courses);
+  const fetchCourses = useCoursesStore((s) => s.fetchCourses);
+  const loaded = useCoursesStore((s) => s.loaded);
+
+  useEffect(() => {
+    if (!loaded) fetchCourses();
+  }, [loaded, fetchCourses]);
+
+  const currentCourse =
+    propCourse ||
+    allCourses.find((c) => String(c.id) === String(activeCourseId)) ||
+    mockCourseData.find((c) => String(c.id) === String(activeCourseId)) ||
+    null;
+
+  const courseTitle = currentCourse?.title || "Course Learning";
 
   const [activeTab, setActiveTab] = useState<TabType>("Curriculum");
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -37,31 +55,32 @@ export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) 
     navigate(`/trainee/programs/${activeCourseId}/learning${query}`);
   };
 
-  const [ homeworks, setHomeworks ] = useState<Homework[]>([]);
-  const [ isHomeworkLoading, setIsHomeworkLoading ] = useState(true);
-  const [ selectedTask, setSelectedTask ] = useState<HomeworkTask | null>(null);
-  const courses = mockCourseData;
-  const instructorName = courses.find(
-    (course) => String(course.id) === String(activeCourseId)
-  )?.instructors[0]?.name;
+  const [homeworks, setHomeworks] = useState<Homework[]>([]);
+  const [isHomeworkLoading, setIsHomeworkLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<HomeworkTask | null>(null);
+
+  const instructorName =
+    currentCourse?.instructors?.[0]?.name ||
+    mockCourseData.find((course) => String(course.id) === String(activeCourseId))?.instructors?.[0]?.name ||
+    "Mentor";
 
   useEffect(() => {
-    if( activeTab !== "Homework" ) return;
+    if (activeTab !== "Homework") return;
 
     let isMounted = true;
 
     getHomeworks(activeCourseId)
       .then((data) => {
-      if( isMounted ) setHomeworks(data);
-    })
+        if (isMounted) setHomeworks(data);
+      })
       .finally(() => {
-        if( isMounted ) setIsHomeworkLoading(false);
+        if (isMounted) setIsHomeworkLoading(false);
       });
 
     return () => {
       isMounted = false;
     };
-  }, [activeTab, activeCourseId])
+  }, [activeTab, activeCourseId]);
   
   const sidebarItems: { id: TabType; label: string; icon: JSX.Element }[] = [
     {
@@ -116,19 +135,21 @@ export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) 
       <div className="flex flex-col h-full overflow-hidden bg-white border shadow-xs border-slate-200 rounded-xl">
 
         {/* Course Header */}
-        <header className="z-10 flex items-center justify-between px-4 bg-white border-b h-14 border-slate-200 shrink-0">
+        <header className="z-10 flex items-center justify-between px-5 bg-white border-b h-16 border-slate-200 shrink-0">
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate(-1)}
-              className="p-1.5 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              onClick={() => navigate("/trainee/programs")}
+              className="p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Back to courses"
+              aria-label="Back to courses"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
-            <h1 className="text-base font-semibold truncate text-slate-900">
-              API/Backend Developer
+            <h1 className="text-xl font-normal truncate text-slate-900 font-kantumruy">
+              {courseTitle}
             </h1>
           </div>
 
@@ -137,7 +158,7 @@ export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) 
             <button
               type="button"
               onClick={() => handleStartLearning()}
-              className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 transition-colors cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2 text-sm font-normal text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 transition-colors cursor-pointer flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
@@ -145,7 +166,7 @@ export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) 
               <span>Continue Watching</span>
             </button>
 
-            <button type="button" className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 cursor-pointer">
+            <button type="button" className="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 cursor-pointer">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
               </svg>
@@ -157,7 +178,7 @@ export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) 
         <div className="flex flex-1 min-h-0">
 
           {/* Sidebar Navigation */}
-          <aside className="flex flex-col h-full gap-1 p-3 overflow-y-auto bg-white border-r w-60 border-slate-200 shrink-0">
+          <aside className="flex flex-col h-full gap-1.5 p-3.5 overflow-y-auto bg-white border-r w-64 border-slate-200 shrink-0">
             {sidebarItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
@@ -165,9 +186,9 @@ export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) 
                   key={item.id}
                   type="button"
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${isActive
-                      ? "bg-slate-100 text-slate-900 font-semibold"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                  className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-normal transition-all cursor-pointer ${isActive
+                      ? "bg-slate-100 text-slate-900 font-normal"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-normal"
                     }`}
                 >
                   <span className={isActive ? "text-slate-900" : "text-slate-400"}>
@@ -180,17 +201,19 @@ export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) 
           </aside>
 
           {/* Main Content Area */}
-          <main className="flex-1 h-full p-2 overflow-y-auto md:p-4 bg-slate-50/50">
+          <main className="flex-1 h-full p-3 overflow-y-auto md:p-5 bg-slate-50/50">
             <div className="max-w-full mx-auto overflow-hidden bg-white border border-slate-200/80 rounded-xl shadow-2xs">
 
               {/* Inner Breadcrumb */}
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-white border-b border-slate-200">
-                <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                <div className="flex items-center gap-2.5 text-base font-normal text-slate-600">
                   <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
                   <span>/</span>
-                  <span>{activeTab}</span>
+                  <span className="font-normal text-slate-900 font-kantumruy">{courseTitle}</span>
+                  <span>/</span>
+                  <span className="font-normal text-slate-700">{activeTab}</span>
                 </div>
               </div>
 
@@ -214,9 +237,27 @@ export function CourseLearning({ courseId: propCourseId }: CourseLearningProps) 
               {
                 selectedTask && (
                   <HomeworkTaskDialog
+                    key={selectedTask.id}
                     task={selectedTask}
                     instructorName={instructorName}
                     onClose={() => setSelectedTask(null)}
+                    onStatusChange={(taskId, newStatus) => {
+                      setHomeworks((prev) =>
+                        prev.map((hw) => ({
+                          ...hw,
+                          tasks: hw.tasks?.map((t) =>
+                            String(t.id) === String(taskId)
+                              ? { ...t, status: newStatus as any }
+                              : t
+                          ),
+                        }))
+                      );
+                      setSelectedTask((prev) =>
+                        prev && String(prev.id) === String(taskId)
+                          ? { ...prev, status: newStatus as any }
+                          : prev
+                      );
+                    }}
                   />
                 )
               }

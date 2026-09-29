@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Chapter } from "../../types/course";
 import { LessonRow } from "../../components/courses/LessonRow";
+import { formatKhmerChapterTitle } from "../../lib/khmerUtils";
 
 type ChapterRowProps = {
   chapter: Chapter;
@@ -19,9 +20,9 @@ export function ChapterRow({ chapter, index, onLessonClick }: ChapterRowProps) {
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="grid items-center w-full grid-cols-12 px-8 py-4 text-sm text-left transition-colors cursor-pointer hover:bg-slate-50"
+        className="grid items-center w-full grid-cols-12 px-8 py-4 text-base font-normal text-left transition-colors cursor-pointer hover:bg-slate-50"
       >
-        <div className="col-span-1 font-normal text-slate-400">
+        <div className="col-span-1 text-base font-normal text-slate-400">
           {index + 1}
         </div>
         <div className={`flex items-center col-span-5 gap-2 pr-4 `}>
@@ -35,8 +36,8 @@ export function ChapterRow({ chapter, index, onLessonClick }: ChapterRowProps) {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
           </svg>
-          <span className="justify-end gap-3 font-medium text-slate-800">
-            {chapter.title}
+          <span className="justify-end gap-3 text-base font-normal text-slate-900 font-kantumruy">
+            {formatKhmerChapterTitle(chapter.title, index)}
           </span>
         </div>
         <div className="flex items-center col-span-2 gap-2 pr-4">
@@ -53,7 +54,7 @@ export function ChapterRow({ chapter, index, onLessonClick }: ChapterRowProps) {
               d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332-.477-4.5-1.253"
             />
           </svg>
-          <span className="justify-end gap-3 font-medium text-slate-800">
+          <span className="justify-end gap-3 text-sm font-normal text-slate-500">
             {lessons.length} lessons
           </span>
         </div>
@@ -70,7 +71,7 @@ export function ChapterRow({ chapter, index, onLessonClick }: ChapterRowProps) {
               style={{ width: `${chapterProgress}%` }}
             />
           </div>
-          <span className="text-xs font-semibold text-slate-600 min-w-[36px] text-right font-mono">
+          <span className="text-sm font-normal text-slate-600 min-w-[36px] text-right font-mono">
             {chapterProgress}%
           </span>
         </div>

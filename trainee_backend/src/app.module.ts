@@ -3,6 +3,10 @@ import { CategoriesModule } from './categories/categories.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { CoursesModule } from './courses/courses.module';
+import { NotificationsModule } from './notifications/notifications.module';
+
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -19,12 +23,20 @@ import { CoursesModule } from './courses/courses.module';
       },
       extra: {
         family: 4,
+        max: 20,
+        connectionTimeoutMillis: 30000,
+        idleTimeoutMillis: 120000,
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
       },
       autoLoadEntities: true,
       synchronize: false,
     }),
     CategoriesModule,
     CoursesModule,
+    NotificationsModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

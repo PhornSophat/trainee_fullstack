@@ -26,23 +26,25 @@ export function App() {
     <ErrorBoundary>
       <BrowserRouter>
 
+
         <ToastNotification />
         <Routes>
           {/* Root redirect */}
           <Route path="/" element={<Navigate to="/trainee/programs" replace />} />
 
           {/* Legacy route redirects */}
-          <Route path="/courses/:courseId/learning" element={<Navigate to="/trainee/courses/:courseId/learning" replace />} />
           <Route path="/courses/:courseId/learning" element={<CourseLearningRedirect />} />
           <Route path="/admin" element={<Navigate to="/admin/insight" replace />} />
+
+          {/* Standalone Udemy-Style Video Learning Routes (Immersive full-screen theater) */}
+          <Route path="/trainee/programs/:courseId/learning" element={<CourseVideoLearning />} />
+          <Route path="/trainee/courses/:courseId/learning" element={<CourseVideoLearning />} />
 
           {/* Main User/Admin Layout routes (shares Header & MainSidebar) */}
           <Route element={<UserLayout />}>
             <Route path="/trainee" element={<DashboardOverview />} />
             <Route index path="/trainee/programs" element={<CourseListing />} />
             <Route path="/trainee/programs/:courseId" element={<CoursePage />} />
-            <Route path="/trainee/programs/:courseId/learning" element={<CourseVideoLearning />} />
-            <Route path="/trainee/courses/:courseId/learning" element={<CourseVideoLearning />} />
 
             <Route element={<AdminRouteGuard />}>
               <Route path="/admin/insight" element={<DashboardOverview />} />

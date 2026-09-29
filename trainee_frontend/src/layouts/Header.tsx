@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCoursesStore } from "@/store/courseStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
+import userProfileImg from "@/assets/images/e20220628.jpg";
 
 type HeaderProps = {
   onMenuOpen: () => void;
@@ -11,32 +14,52 @@ type HeaderProps = {
 export function Header({ onMenuOpen }: HeaderProps) {
 
   const [open, setOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const [showRoleDrawer, setShowRoleDrawer] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const notificationMenuRef = useRef<HTMLDivElement>(null);
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
   const previousRoleRef = useRef(role);
   const fetchCourses = useCoursesStore((s) => s.fetchCourses);
-  const courses = useCoursesStore((s) => s.courses);
   const navigate = useNavigate();
 
-  useEffect(() => { fetchCourses(); }, [fetchCourses]);
+  const unreadCount = useNotificationStore((s) =>
+    s.notifications.filter(
+      (n) => !n.read && (!n.forRole || n.forRole === "all" || n.forRole === role)
+    ).length
+  );
+
+  const showDot = unreadCount > 0;
+
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
   useEffect(() => {
-    const closeProfileMenu = (event: MouseEvent) => {
+    fetchCourses();
+    fetchNotifications(role);
+  }, [fetchCourses, fetchNotifications, role]);
+
+  useEffect(() => {
+    const closeDropdowns = (event: MouseEvent) => {
       if (!profileMenuRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
+      if (!notificationMenuRef.current?.contains(event.target as Node)) {
+        setNotificationOpen(false);
+      }
     };
 
-    if (open) {
-      document.addEventListener("mousedown", closeProfileMenu);
+    if (open || notificationOpen) {
+      document.addEventListener("mousedown", closeDropdowns);
     }
 
-    return () => document.removeEventListener("mousedown", closeProfileMenu);
-  }, [open]);
+    return () => document.removeEventListener("mousedown", closeDropdowns);
+  }, [open, notificationOpen]);
 
   useEffect(() => {
+    if (previousRoleRef.current !== role) {
+      fetchCourses(true);
+    }
     if (previousRoleRef.current === 'user' && role === 'admin') {
       navigate('/admin/insight', { replace: true });
     } else if (previousRoleRef.current === 'admin' && role === 'user') {
@@ -44,10 +67,7 @@ export function Header({ onMenuOpen }: HeaderProps) {
     }
 
     previousRoleRef.current = role;
-  }, [role, navigate]);
-
-  const hasPending = courses.some((c) => c.approvalStatus === 'PENDING');
-  const showDot = role === 'admin' && hasPending;
+  }, [role, navigate, fetchCourses]);
 
   return (
     <>
@@ -70,40 +90,92 @@ export function Header({ onMenuOpen }: HeaderProps) {
           <button type="button" className="transition-colors hover:text-[#1e2b3f]" aria-label="Toggle theme">
             <MoonStar className="h-[24px] w-[24px]" strokeWidth={1.8} />
           </button>
-          <button
-            type="button"
-            onClick={() => { if (role === 'admin') navigate('/admin/courses'); }}
-            className="relative transition-colors hover:text-[#1e2b3f]"
-            aria-label="Notifications"
-          >
-            <Bell className="h-[24px] w-[24px]" strokeWidth={1.8} />
-            {showDot && (
-              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-red-500 ring-1 ring-white" />
+          
+          {/* Notification Bell & Dropdown */}
+          <div ref={notificationMenuRef} className="relative flex items-center">
+            <button
+              type="button"
+              onClick={() => setNotificationOpen((prev) => !prev)}
+              className="relative p-1 transition-colors hover:text-[#1e2b3f]"
+              aria-label="Notifications"
+            >
+              <Bell className="h-[24px] w-[24px]" strokeWidth={1.8} />
+              {showDot && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+            {notificationOpen && (
+              <NotificationDropdown onClose={() => setNotificationOpen(false)} />
             )}
-          </button>
+          </div>
+
           <button type="button" className="flex items-center gap-1.5" aria-label="Language: Khmer">
             <span className="text-lg leading-none" aria-hidden="true">🇰🇭</span>
           </button>
           <div ref={profileMenuRef} className="relative">
-            <button type="button" onClick={() => setOpen(o => !o)} aria-label="Open profile menu">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[9px] font-bold text-slate-600 ring-1 ring-slate-300">
-                {role === 'admin' ? 'AD' : 'SP'}
-              </span>
+            <button
+              type="button"
+              onClick={() => setOpen((o) => !o)}
+              aria-label="Open profile menu"
+              className="flex items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-none"
+            >
+              <img
+                src={userProfileImg}
+                alt={role === "admin" ? "Admin Profile" : "User Profile"}
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-slate-200 hover:ring-[#0088A8] transition-all shadow-sm"
+              />
             </button>
             {open && (
-              <div className="absolute right-0 py-1 mt-4 bg-white border rounded-md shadow-lg w-52 border-slate-200">
-                <button onClick={() => setOpen(false)}
-                  className="flex items-center w-full gap-3 px-3 py-2 text-left text-md hover:bg-slate-50">
-                  <span className="flex items-center justify-center font-bold rounded h-9 w-9 bg-slate-100 text-slate-900"><User className="w-5 h-5" /></span> Profile
-                </button>
-                <button onClick={() => setOpen(false)}
-                  className="flex items-center w-full gap-3 px-3 py-2 text-base text-left hover:bg-slate-50">
-                  <span className="flex items-center justify-center rounded h-9 w-9 bg-slate-100 text-slate-600"><Settings className="w-5 h-5" /></span> Setting
-                </button>
-                <button onClick={() => { setOpen(false); setShowRoleDrawer(true); }}
-                  className="flex items-center w-full gap-3 px-3 py-2 text-base text-left hover:bg-slate-50">
-                  <span className="flex items-center justify-center rounded text-slate-600 h-9 w-9 bg-slate-100"><Repeat className="w-5 h-5" /></span> Switch Role
-                </button>
+              <div className="absolute right-0 z-50 mt-3 w-56 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
+                <div className="flex items-center gap-3 border-b border-slate-100 px-3.5 pb-2.5 pt-1">
+                  <img
+                    src={userProfileImg}
+                    alt="Profile"
+                    className="h-10 w-10 rounded-full object-cover ring-1 ring-slate-200 shadow-sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-800">
+                      {role === "admin" ? "Administrator" : "សុផាត ផន"}
+                    </p>
+                    <p className="text-xs text-slate-500 capitalize">
+                      {role === "admin" ? "Admin" : "Normal User"}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-1">
+                  <button
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center gap-3 px-3.5 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                      <User className="h-4 w-4" />
+                    </span>
+                    Profile
+                  </button>
+                  <button
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center gap-3 px-3.5 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                      <Settings className="h-4 w-4" />
+                    </span>
+                    Setting
+                  </button>
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      setShowRoleDrawer(true);
+                    }}
+                    className="flex w-full items-center gap-3 px-3.5 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                      <Repeat className="h-4 w-4" />
+                    </span>
+                    Switch Role
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -117,7 +189,7 @@ export function Header({ onMenuOpen }: HeaderProps) {
           onClick={() => setShowRoleDrawer(false)}
         />
       )}
-      <div className={`fixed top-0 right-0 z-50 flex h-full w-[450px] flex-col bg-white shadow-lg transition-transform duration-300 ${showRoleDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed top-0 right-0 z-50 flex h-full w-[500px] flex-col bg-white shadow-lg transition-transform duration-300 ${showRoleDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
         <button
           type="button"
           onClick={() => setShowRoleDrawer(false)}
@@ -130,32 +202,52 @@ export function Header({ onMenuOpen }: HeaderProps) {
         <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-[#1e2b3f]">
           <h2 className="flex items-center justify-center w-full text-lg font-semibold text-white">Switch Role</h2>
         </div>
-        <div className="p-4 space-y-2">
+        <div className="py-4 space-y-2">
           <button
             onClick={() => { setRole('admin'); setShowRoleDrawer(false); }}
             className={`flex w-full items-center gap-4 px-4 py-3 text-lg text-left rounded transition-colors ${role === 'admin'
-                ? 'border-[#0088A8] bg-[#0088A8]/5 font-semibold text-[#0088A8]'
+                ? 'border-[#0088A8] bg-[#0088A8]/30 font-semibold text-[#0088A8]'
                 : 'border-slate-200 hover:bg-slate-50'
               }`}
           >
-            <span className={`flex h-10 w-10 items-center justify-center rounded-full ${role === 'admin' ? 'bg-[#0088A8]/70 text-white' : 'bg-slate-100'}`}>
-              <ShieldCheck className="w-6 h-6" />
-            </span>
-            Admin
-            {role === 'admin' && <span className="ml-auto">✓</span>}
+            <div className="relative">
+              <img
+                src={userProfileImg}
+                alt="Admin"
+                className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-200 shadow-sm"
+              />
+              <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0088A8] text-white ring-2 ring-white">
+                <ShieldCheck className="h-3 w-3" />
+              </span>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800">Admin</p>
+              {/* <p className="text-xs text-slate-500 font-normal">Administrator account</p> */}
+            </div>
+            {role === 'admin' && <span className="ml-auto font-bold text-[#0088A8]">✓</span>}
           </button>
           <button
             onClick={() => { setRole('user'); setShowRoleDrawer(false); }}
             className={`flex w-full items-center gap-4 px-4 py-3 text-lg text-left rounded transition-colors ${role === 'user'
-                ? 'border-[#0088A8] bg-[#0088A8]/5 font-semibold text-[#0088A8]'
+                ? 'border-[#0088A8] bg-[#0088A8]/30 font-semibold text-[#0088A8]'
                 : 'border-slate-200 hover:bg-[#0088A8]/12'
               }`}
           >
-            <span className={`flex h-10 w-10 items-center justify-center rounded-full ${role === 'user' ? 'bg-[#0088A8]/70 text-white' : 'bg-slate-100'}`}>
-              <User className="w-6 h-6" />
-            </span>
-            Normal User
-            {role === 'user' && <span className="ml-auto">✓</span>}
+            <div className="relative">
+              <img
+                src={userProfileImg}
+                alt="Trainee"
+                className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-200 shadow-sm"
+              />
+              <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-600 text-white ring-2 ring-white">
+                <User className="h-3 w-3" />
+              </span>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800">Trainee</p>
+              {/* <p className="text-xs text-slate-500 font-normal">សុផាត ផន (Trainee)</p> */}
+            </div>
+            {role === 'user' && <span className="ml-auto font-bold text-[#0088A8]">✓</span>}
           </button>
         </div>
       </div>

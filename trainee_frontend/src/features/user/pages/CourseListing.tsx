@@ -32,7 +32,7 @@ export function CourseListing() {
   const handleCategorySelect = (
     category: CategoryNavigationItem
   ) => {
-    setSelectedCategoryId(category.id);
+    setSelectedCategoryId((prev) => (prev === category.id ? undefined : category.id));
   };
 
   const handleFavoriteChange = (
@@ -41,11 +41,6 @@ export function CourseListing() {
     toggleFavorite(selectedCourse.id);
   };
 
-  const selectedCategory = categories.find(
-    (category) => category.id === selectedCategoryId
-  );
-
-  // Filter by category (if clicked) and sort APPROVED courses first
   const filteredCourses = courses
     .filter((course) => {
       if (!selectedCategoryId) return true;
@@ -67,7 +62,7 @@ export function CourseListing() {
         </h1>
 
         <p className="max-w-[58rem] text-[1.2rem] leading-[1.9] text-slate-900 font-kantumruy">
-          រៀនជំនាញបច្ចេកទេសដែលសមស្របនឹងទេពកោសល្យរបស់អ្នក។ ប្រសិនបើអ្នកមិនច្បាស់ថាគួររៀនជំនាញណា សូមស្វាគមន៍ក្នុងការស្វាងយល់វគ្គសិក្សាដែលមាននៅទីនេះ ឬលទ្ធផលក្រុម CamCyber ដោយស្នើសុំការប្រឹក្សាយោបល់។
+          រៀនជំនាញបច្ចេកទេសដែលសមស្របនឹងទេពកោសល្យរបស់អ្នក។ ប្រសិនបើអ្នកមិនច្បាស់ថាគួររៀនជំនាញណា សូមស្វាគមន៍ក្នុងការស្វាងយល់វគ្គសិក្សាដែលមាននៅទីនេះ ឬលទ្ធផលក្រុមខេមហ្សាយប៊រ ដោយស្នើសុំការប្រឹក្សាយោបល់។
         </p>
       </div>
 
@@ -85,25 +80,31 @@ export function CourseListing() {
       />
 
       {/* Selected category */}
-      <div className="p-6 text-slate-700 font-kantumruy">
+      {/* <div className="p-6 text-slate-700 font-kantumruy">
         {selectedCategory
-          ? `បង្ហាញ ${selectedCategory.name} វគ្គសិក្សា`
+          ? `បង្ហាញ ${selectedCategory.name} វគ្គសិក្សា (${filteredCourses.length})`
           : "សូមជ្រើសរើសលក្ខណៈវិនិច្ឆ័យវគ្គសិក្សា"}
-      </div>
+      </div> */}
 
       {/* Courses */}
-      <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {filteredCourses.map((course) => (
-          <CourseCard
-            key={course.id}
-            course={course}
-            onClick={(selectedCourse) => {
-              navigate(`/trainee/programs/${selectedCourse.id}`);
-            }}
-            onFavoriteChange={handleFavoriteChange}
-          />
-        ))}
-      </div>
+      {filteredCourses.length === 0 ? (
+        <div className="p-12 text-slate-400 font-kantumruy">
+          មិនមានវគ្គសិក្សាក្នុងជំពូកនេះទេ
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {filteredCourses.map((course) => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              onClick={(selectedCourse) => {
+                navigate(`/trainee/programs/${selectedCourse.id}`);
+              }}
+              onFavoriteChange={handleFavoriteChange}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

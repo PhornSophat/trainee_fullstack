@@ -5,14 +5,17 @@ import {
     ClipboardList,
     Code2,
     Info,
+    Plus,
     X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useCoursesStore } from "@/store/courseStore";
-import type { CourseCardItem } from "@/types/course";
+import type { CourseCardItem, KeyLesson, CourseTechnology, CourseFAQ, LearningResource, Chapter, Lesson, Homework, HomeworkTask } from "@/types/course";
 
 import { CourseCoverBanner } from "./CourseCoverBanner";
-import { GeneralDrawerContent } from "./general-drawer/GeneralDrawerContent";
+import { GeneralDrawerContent, type GeneralViewMode } from "./general-drawer/GeneralDrawerContent";
+import { CurriculumDrawerContent } from "./curriculum-drawer/CurriculumDrawerContent";
+import { HomeworkDrawerContent } from "./homework-drawer/HomeworkDrawerContent";
 
 type CourseDetailDrawerProps = {
     course: CourseCardItem | null;
@@ -25,15 +28,55 @@ export function CourseDetailDrawer({
     isOpen,
     onClose,
 }: CourseDetailDrawerProps) {
-    const [activeView, setActiveView] = useState<'main' | 'general'>('main');
+    const [activeView, setActiveView] = useState<'main' | 'general' | 'curriculum' | 'homework'>('main');
+    const [generalMode, setGeneralMode] = useState<GeneralViewMode>('view');
+    const [isAddChapterOpen, setIsAddChapterOpen] = useState(false);
+    const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+    const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+    const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
+    const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+    const [isAddLessonOpen, setIsAddLessonOpen] = useState(false);
+    const [selectedHomework, setSelectedHomework] = useState<Homework | null>(null);
+    const [selectedTask, setSelectedTask] = useState<HomeworkTask | null>(null);
+    const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
+    const [editingTask, setEditingTask] = useState<HomeworkTask | null>(null);
+    const [isAddHomeworkOpen, setIsAddHomeworkOpen] = useState(false);
+    const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+    const [selectedSkill, setSelectedSkill] = useState<{ index: number; text: string } | null>(null);
+    const [selectedKeyLesson, setSelectedKeyLesson] = useState<{ index?: number; lesson?: KeyLesson } | null>(null);
+    const [selectedTech, setSelectedTech] = useState<{ index?: number; tech?: CourseTechnology } | null>(null);
+    const [selectedFaq, setSelectedFaq] = useState<{ index?: number; faq?: CourseFAQ } | null>(null);
+    const [selectedResource, setSelectedResource] = useState<{ index?: number; resource?: LearningResource } | null>(null);
 
     // Subscribe to store so updates (like cover image changes) are reflected immediately in real time across all views!
     const storeCourses = useCoursesStore((s) => s.courses);
-    const activeCourse = storeCourses.find((c) => c.id === course?.id) || course;
+    const activeCourse = storeCourses.find((c) => String(c.id) === String(course?.id)) || course;
+
+    const resetGeneralSubviews = () => {
+        setGeneralMode('view');
+        setSelectedSkill(null);
+        setSelectedKeyLesson(null);
+        setSelectedTech(null);
+        setSelectedFaq(null);
+        setSelectedResource(null);
+    };
 
     useEffect(() => {
         if (!isOpen) {
             setActiveView('main');
+            resetGeneralSubviews();
+            setSelectedChapter(null);
+            setSelectedLesson(null);
+            setEditingChapter(null);
+            setEditingLesson(null);
+            setIsAddChapterOpen(false);
+            setIsAddLessonOpen(false);
+            setSelectedHomework(null);
+            setSelectedTask(null);
+            setEditingHomework(null);
+            setEditingTask(null);
+            setIsAddHomeworkOpen(false);
+            setIsAddTaskOpen(false);
             return;
         }
 
@@ -51,9 +94,122 @@ export function CourseDetailDrawer({
         };
     }, [isOpen, onClose]);
 
+    const handleGeneralBack = () => {
+        if (generalMode !== 'view') {
+            resetGeneralSubviews();
+        } else {
+            setActiveView('main');
+        }
+    };
+
+    const handleCurriculumBack = () => {
+        if (isAddLessonOpen) {
+            setIsAddLessonOpen(false);
+        } else if (editingLesson) {
+            setEditingLesson(null);
+        } else if (editingChapter) {
+            setEditingChapter(null);
+        } else if (selectedLesson) {
+            setSelectedLesson(null);
+        } else if (selectedChapter) {
+            setSelectedChapter(null);
+        } else {
+            setActiveView('main');
+        }
+    };
+
+    const handleCurriculumAdd = () => {
+        if (selectedChapter) {
+            setIsAddLessonOpen(true);
+        } else {
+            setIsAddChapterOpen(true);
+        }
+    };
+
+    const getCurriculumTitle = () => {
+        if (isAddLessonOpen) {
+            return "បន្ថែមមេរៀនថ្មី";
+        }
+        if (editingLesson) {
+            return "កែប្រែមេរៀន";
+        }
+        if (editingChapter) {
+            return "កែប្រែជំពូក";
+        }
+        if (selectedLesson) {
+            return selectedLesson.title;
+        }
+        if (selectedChapter) {
+            return selectedChapter.title;
+        }
+        return "Curriculum";
+    };
+
+    const handleHomeworkBack = () => {
+        if (isAddTaskOpen) {
+            setIsAddTaskOpen(false);
+        } else if (editingTask) {
+            setEditingTask(null);
+        } else if (editingHomework) {
+            setEditingHomework(null);
+        } else if (selectedTask) {
+            setSelectedTask(null);
+        } else if (selectedHomework) {
+            setSelectedHomework(null);
+        } else {
+            setActiveView('main');
+        }
+    };
+
+    const handleHomeworkAdd = () => {
+        if (selectedHomework) {
+            setIsAddTaskOpen(true);
+        } else {
+            setIsAddHomeworkOpen(true);
+        }
+    };
+
+    const getHomeworkTitle = () => {
+        if (isAddTaskOpen) {
+            return "បន្ថែមភារកិច្ចថ្មី";
+        }
+        if (editingTask) {
+            return "កែប្រែភារកិច្ច";
+        }
+        if (editingHomework) {
+            return "កែប្រែកិច្ចការផ្ទះ";
+        }
+        if (selectedTask) {
+            return selectedTask.title;
+        }
+        if (selectedHomework) {
+            return selectedHomework.title;
+        }
+        return "Homework";
+    };
+
+    const getGeneralTitle = () => {
+        switch (generalMode) {
+            case 'edit-general':
+                return 'Edit Course';
+            case 'edit-skill':
+                return selectedSkill ? 'Edit Skill' : 'Add Skill';
+            case 'edit-key-lesson':
+                return selectedKeyLesson ? 'Edit Key Lesson' : 'Add Key Lesson';
+            case 'edit-technology':
+                return selectedTech ? 'Edit Technology' : 'Add Technology';
+            case 'edit-faq':
+                return selectedFaq ? 'Edit Q&A' : 'Add Q&A';
+            case 'edit-learning-resource':
+                return selectedResource ? 'Edit Learning Resource' : 'Add Learning Resource';
+            default:
+                return 'General';
+        }
+    };
+
     return (
         <div
-            className={`fixed inset-0 z-50 overflow-hidden transition ${
+            className={`fixed inset-0 z-50 overflow-hidden transition font-kantumruy ${
                 isOpen && activeCourse ? "pointer-events-auto" : "pointer-events-none"
             }`}
             aria-hidden={!isOpen || !activeCourse}
@@ -78,12 +234,123 @@ export function CourseDetailDrawer({
                 {activeView === 'main' ? (
                     <>
                         <DrawerHeader isOpen={isOpen} onClose={onClose} title="Programs" />
-                        {activeCourse && <CourseDrawerContent course={activeCourse} onOpenGeneral={() => setActiveView('general')} />}
+                        {activeCourse && 
+                            <CourseDrawerContent 
+                                course={activeCourse} 
+                                onOpenGeneral={() => setActiveView('general')} 
+                                onOpenCurriculum={() => setActiveView('curriculum')} 
+                                onOpenHomework={() => setActiveView('homework')} 
+                            />
+                        }
+                    </>
+                ) : activeView === 'homework' ? (
+                    <>
+                        <DrawerHeader 
+                            isOpen={isOpen} 
+                            onClose={handleHomeworkBack} 
+                            title={getHomeworkTitle()} 
+                            isBack 
+                            rightAction={
+                                !selectedTask && !editingHomework && !editingTask && !isAddTaskOpen ? (
+                                    <button 
+                                        type="button" 
+                                        onClick={handleHomeworkAdd}
+                                        className="p-1.5 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
+                                        title={selectedHomework ? "Add Task" : "Add Homework"}
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                ) : undefined
+                            }
+                        />
+                        {activeCourse && (
+                            <HomeworkDrawerContent 
+                                course={activeCourse} 
+                                selectedHomework={selectedHomework}
+                                onSelectHomework={(hw) => {
+                                    setSelectedHomework(hw);
+                                    if (!hw) setSelectedTask(null);
+                                }}
+                                selectedTask={selectedTask}
+                                onSelectTask={setSelectedTask}
+                                isAddHomeworkOpen={isAddHomeworkOpen}
+                                setIsAddHomeworkOpen={setIsAddHomeworkOpen}
+                                isAddTaskOpen={isAddTaskOpen}
+                                setIsAddTaskOpen={setIsAddTaskOpen}
+                                editingHomework={editingHomework}
+                                setEditingHomework={setEditingHomework}
+                                editingTask={editingTask}
+                                setEditingTask={setEditingTask}
+                            />
+                        )}
+                    </>
+                ) : activeView === 'curriculum' ? (
+                    <>
+                        {/* Render Curriculum / Chapter Lessons / Lesson Detail View */}
+                        <DrawerHeader 
+                            isOpen={isOpen} 
+                            onClose={handleCurriculumBack} 
+                            title={getCurriculumTitle()} 
+                            isBack 
+                            rightAction={
+                                !selectedLesson && !editingChapter && !editingLesson && !isAddLessonOpen ? (
+                                    <button 
+                                        type="button" 
+                                        onClick={handleCurriculumAdd}
+                                        className="p-1.5 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
+                                        title={selectedChapter ? "Add Lesson" : "Add Chapter"}
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                ) : undefined
+                            }
+                        />
+                        {activeCourse && (
+                            <CurriculumDrawerContent 
+                                course={activeCourse} 
+                                selectedChapter={selectedChapter}
+                                onSelectChapter={(chapter) => {
+                                    setSelectedChapter(chapter);
+                                    if (!chapter) setSelectedLesson(null);
+                                }}
+                                selectedLesson={selectedLesson}
+                                onSelectLesson={setSelectedLesson}
+                                isAddChapterOpen={isAddChapterOpen}
+                                setIsAddChapterOpen={setIsAddChapterOpen}
+                                isAddLessonOpen={isAddLessonOpen}
+                                setIsAddLessonOpen={setIsAddLessonOpen}
+                                editingChapter={editingChapter}
+                                setEditingChapter={setEditingChapter}
+                                editingLesson={editingLesson}
+                                setEditingLesson={setEditingLesson}
+                            />
+                        )}
                     </>
                 ) : (
                     <>
-                        <DrawerHeader isOpen={isOpen} onClose={() => setActiveView('main')} title="General" isBack />
-                        {activeCourse && <GeneralDrawerContent course={activeCourse} />}
+                        <DrawerHeader 
+                            isOpen={isOpen} 
+                            onClose={handleGeneralBack} 
+                            title={getGeneralTitle()} 
+                            isBack 
+                        />
+                        {activeCourse && (
+                            <GeneralDrawerContent 
+                                course={activeCourse} 
+                                viewMode={generalMode}
+                                setViewMode={setGeneralMode}
+                                selectedSkill={selectedSkill}
+                                setSelectedSkill={setSelectedSkill}
+                                selectedKeyLesson={selectedKeyLesson}
+                                setSelectedKeyLesson={setSelectedKeyLesson}
+                                selectedTech={selectedTech}
+                                setSelectedTech={setSelectedTech}
+                                selectedFaq={selectedFaq}
+                                setSelectedFaq={setSelectedFaq}
+                                selectedResource={selectedResource}
+                                setSelectedResource={setSelectedResource}
+                            />
+                        )}
                     </>
                 )}
             </aside>
@@ -96,27 +363,37 @@ function DrawerHeader({
     onClose,
     title,
     isBack = false,
+    rightAction,
 }: {
     isOpen: boolean;
     onClose: () => void;
     title: string;
     isBack?: boolean;
+    rightAction?: React.ReactNode;
 }) {
     return (
-        <header className="relative flex items-center justify-center h-16 p-4 border-b shrink-0 border-slate-300">
+        <header className="relative flex items-center justify-center h-16 px-6 border-b shrink-0 border-slate-200">
             {isOpen && (
                 <button
                     type="button"
                     onClick={onClose}
                     aria-label={isBack ? "Back to programs" : "Close course details"}
-                    className="absolute -left-4 top-3.5 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full bg-white text-[#60738d] shadow-md hover:text-slate-900 border border-slate-200 z-10"
+                    className="absolute -left-4 top-3.5 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full bg-white text-[#60738d] shadow-md hover:text-slate-900 border border-slate-200 z-50 transition-colors cursor-pointer"
                 >
                     {isBack ? <ArrowLeft className="w-5 h-5 text-slate-600" /> : <X className="w-5 h-5" />}
                 </button>
             )}
-            <h2 className="font-kantumruy text-lg font-semibold text-[#60738d]">
+            <h2 className="font-kantumruy text-base font-semibold text-[#60738d]">
                 {title}
             </h2>
+
+            {
+                rightAction && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        {rightAction}
+                    </div>
+                )
+            }
         </header>
     );
 }
@@ -124,9 +401,13 @@ function DrawerHeader({
 function CourseDrawerContent({
     course,
     onOpenGeneral,
+    onOpenCurriculum,
+    onOpenHomework,
 }: {
     course: CourseCardItem;
     onOpenGeneral: () => void;
+    onOpenCurriculum: () => void;
+    onOpenHomework: () => void;
 }) {
     return (
         <div className="flex-1 min-h-0 overflow-y-auto font-kantumruy">
@@ -138,8 +419,8 @@ function CourseDrawerContent({
                 </h3>
                 <div className="flex gap-2">
                     <ManageTile icon={Info} label="General" onClick={onOpenGeneral} />
-                    <ManageTile icon={BookOpen} label="Curriculum" />
-                    <ManageTile icon={ClipboardList} label="Homework" />
+                    <ManageTile icon={BookOpen} label="Curriculum" onClick={onOpenCurriculum} />
+                    <ManageTile icon={ClipboardList} label="Homework" onClick={onOpenHomework} />
                 </div>
             </section>
 

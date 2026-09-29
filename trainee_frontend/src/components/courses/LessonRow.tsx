@@ -1,15 +1,16 @@
 import type { Lesson } from "../../types/course";
+import { formatKhmerLessonTitle } from "../../lib/khmerUtils";
 
 type LessonRowProps = {
   lesson: Lesson;
-  chapterIndex: number;
+  chapterIndex?: number;
   lessonIndex: number;
   onClick?: () => void; // Added click handler callback
 };
 
 export function LessonRow({
   lesson,
-  chapterIndex,
+  chapterIndex: _chapterIndex,
   lessonIndex,
   onClick,
 }: LessonRowProps) {
@@ -18,17 +19,14 @@ export function LessonRow({
   return (
     <div
       onClick={onClick}
-      className="flex items-center justify-between p-3 text-xs transition-all bg-white border rounded-lg cursor-pointer border-slate-200/60 shadow-2xs hover:border-indigo-300 hover:shadow-xs"
+      className="flex items-center justify-between p-3.5 text-sm transition-all bg-white border rounded-lg cursor-pointer border-slate-200/60 shadow-2xs hover:border-indigo-300 hover:shadow-xs"
     >
       <div className="flex items-center gap-3">
-        <span className="w-4 font-mono text-slate-400">
-          {chapterIndex + 1}.{lessonIndex + 1}
-        </span>
-        <span className="font-medium transition-colors text-slate-800 hover:text-indigo-600">
-          {lesson.title}
+        <span className="text-base font-normal transition-colors text-slate-900 hover:text-indigo-600 font-kantumruy">
+          {formatKhmerLessonTitle(lesson.title, lessonIndex)}
         </span>
         {lesson.duration && (
-          <span className="text-slate-400 font-mono text-[11px]">
+          <span className="text-slate-500 font-mono text-xs font-normal">
             (Duration: {lesson.duration})
           </span>
         )}
@@ -40,11 +38,11 @@ export function LessonRow({
             className={`h-full transition-all duration-300 ${
               progress === 100 ? "bg-emerald-500" : "bg-amber-500"
             }`}
-            style={{ width: `${progress}%` }} // Fixed missing '%' unit
+            style={{ width: `${progress}%` }}
           />
         </div>
         <span
-          className={`px-2 py-0.5 rounded-md font-mono text-[12px] font-medium border ${
+          className={`px-2.5 py-0.5 rounded-md font-mono text-xs font-normal border ${
             progress === 100
               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
               : progress > 0

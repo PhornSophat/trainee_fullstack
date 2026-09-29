@@ -28,7 +28,7 @@ export function HomeworkTable({ homeworks, isLoading, onTaskClick } : HomeworkTa
 
   return (
     <div className="w-full bg-white text-slate-700">
-        <div className="grid grid-cols-12 px-8 py-4 text-xs font-semibold border-b border-slate-200 text-slate-900">
+        <div className="grid grid-cols-12 px-8 py-4 text-sm font-normal border-b border-slate-200 text-slate-600">
             <div className="col-span-1">
                 No.
             </div>

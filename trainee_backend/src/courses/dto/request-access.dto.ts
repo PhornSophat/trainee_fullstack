@@ -1,8 +1,8 @@
-import { IsString, IsUUID, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class RequestAccessDto {
+  @IsOptional()
   @IsString()
-  @IsUUID('4', { message: 'userId must be a valid UUID v4' })
-  @IsNotEmpty()
-  userId: string;
+  userId?: string;
 }
+

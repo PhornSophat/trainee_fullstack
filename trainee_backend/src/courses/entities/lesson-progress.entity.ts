@@ -2,8 +2,6 @@ import {
   Entity,
   PrimaryColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
@@ -24,14 +22,11 @@ export class LessonProgress {
   @Column({ name: 'last_watched_at', type: 'timestamptz', nullable: true })
   lastWatchedAt?: Date;
 
+  @Column({ name: 'last_position_seconds', type: 'real', default: 0 })
+  lastPositionSeconds!: number;
+
   @Column({ name: 'completed_at', type: 'timestamptz', nullable: true })
   completedAt?: Date;
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt!: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt!: Date;
 
   @ManyToOne(() => Lesson, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'lesson_id' })

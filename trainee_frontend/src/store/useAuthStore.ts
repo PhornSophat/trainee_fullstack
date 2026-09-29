@@ -1,13 +1,21 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-type Role = 'user' | 'admin';
+export type Role = 'user' | 'admin';
 
 interface AuthState {
     role: Role;
     setRole: (r: Role) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-    role: 'user',
-    setRole: (r) => set({ role: r}),
-}));
+export const useAuthStore = create<AuthState>()(
+    persist(
+        (set) => ({
+            role: 'user',
+            setRole: (r) => set({ role: r }),
+        }),
+        {
+            name: 'app_auth_role',
+        }
+    )
+);

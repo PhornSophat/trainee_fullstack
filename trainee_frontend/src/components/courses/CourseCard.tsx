@@ -10,7 +10,7 @@ type CourseCardProps = {
 };
 
 export function CourseCard({ course, onClick, onFavoriteChange }: CourseCardProps) {
-  const visibleInstructors = course.instructors.slice(0, 4);
+  const visibleInstructors = course.instructors.slice(0, 2);
   const additionalInstructors = course.instructors.length - visibleInstructors.length;
   const filledStars = Math.round(Math.min(5, Math.max(0, course.rating)));
 
