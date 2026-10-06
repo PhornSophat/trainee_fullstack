@@ -9,6 +9,7 @@ import {
   Plus,
   SendHorizontal,
   Upload,
+  User,
   X,
   Check,
   ZoomIn,
@@ -19,7 +20,6 @@ import {
 import type { HomeworkTask } from "../../types/course";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
-import verifierAvatar from "../../assets/images/e20220628.jpg";
 import noChatIllustration from "../../assets/images/no-chat.svg";
 import {
   getTaskSubmission,
@@ -255,7 +255,7 @@ export function HomeworkTaskDialog({ task, taskId, instructorName: _instructorNa
                 type: "message",
                 sender: m.sender,
                 senderName: sName,
-                avatar: isInst ? verifierAvatar : undefined,
+                avatar: isInst ? undefined : "/e20220628.jpg",
                 text: m.text,
                 time: new Date(m.sentAt).toLocaleTimeString("en-US", {
                   hour: "2-digit",
@@ -353,7 +353,7 @@ export function HomeworkTaskDialog({ task, taskId, instructorName: _instructorNa
         type: "message",
         sender: currentSender,
         senderName: savedMsg.senderName || currentSenderName,
-        avatar: currentSender === "instructor" ? verifierAvatar : undefined,
+        avatar: currentSender === "instructor" ? undefined : "/e20220628.jpg",
         text: savedMsg.text,
         time: getCurrentFormattedTime(),
         date: formatKhmerDate(new Date()),
@@ -367,7 +367,7 @@ export function HomeworkTaskDialog({ task, taskId, instructorName: _instructorNa
         type: "message",
         sender: currentSender,
         senderName: currentSenderName,
-        avatar: currentSender === "instructor" ? verifierAvatar : undefined,
+        avatar: currentSender === "instructor" ? undefined : "/e20220628.jpg",
         text,
         time: getCurrentFormattedTime(),
         date: formatKhmerDate(new Date()),
@@ -599,11 +599,9 @@ export function HomeworkTaskDialog({ task, taskId, instructorName: _instructorNa
 
               {/* Item 3: Verifier (អ្នកផ្ទៀងផ្ទាត់) */}
               <div className="flex items-center gap-3.5">
-                <img
-                  src={verifierAvatar}
-                  alt={verifierName}
-                  className="h-10 w-10 shrink-0 rounded-full object-cover border border-slate-200 shadow-2xs"
-                />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0088A8] to-[#0ab3dc] text-white shadow-2xs ring-1 ring-slate-200">
+                  <User className="h-5 w-5" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-slate-400 font-normal">អ្នកផ្ទៀងផ្ទាត់</p>
                   <p className="text-sm font-normal text-slate-800 truncate mt-0.5">
@@ -889,9 +887,11 @@ export function HomeworkTaskDialog({ task, taskId, instructorName: _instructorNa
                           );
                         } else {
                           // Messages sent by OTHER person -> Positioned on the LEFT side
+                          const isInst =
+                            item.sender === "instructor" || item.senderName === adminName;
                           const otherAvatar =
                             item.avatar ||
-                            (item.sender === "instructor" ? verifierAvatar : "/e20220628.jpg");
+                            (isInst ? undefined : "/e20220628.jpg");
                           const otherName =
                             item.senderName ||
                             (item.sender === "instructor" ? adminName : studentName);
@@ -899,11 +899,17 @@ export function HomeworkTaskDialog({ task, taskId, instructorName: _instructorNa
                           itemNode = (
                             <div key={item.id} className="flex flex-col items-start max-w-[85%] mr-auto">
                               <div className="flex items-start gap-2.5">
-                                <img
-                                  src={otherAvatar}
-                                  alt={otherName}
-                                  className="h-9 w-9 rounded-full object-cover border border-slate-200 shrink-0 mt-0.5 shadow-2xs"
-                                />
+                                {isInst ? (
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0088A8] to-[#0ab3dc] text-white shadow-2xs mt-0.5 ring-1 ring-slate-200">
+                                    <User className="h-4 w-4" />
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={otherAvatar || "/e20220628.jpg"}
+                                    alt={otherName}
+                                    className="h-9 w-9 rounded-full object-cover border border-slate-200 shrink-0 mt-0.5 shadow-2xs"
+                                  />
+                                )}
                                 <div className="flex flex-col items-start">
                                   <p className="text-xs text-slate-500 font-semibold mb-1 ml-1 font-kantumruy">
                                     {otherName}

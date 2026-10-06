@@ -20,6 +20,7 @@ import { useToastStore } from "@/store/useToastStore";
 import { setCourseApproval } from "@/services/courseService";
 import type { ApprovalStatus } from "@/types/course";
 import userProfileImg from "@/assets/images/e20220628.jpg";
+import { TraineeCVModal } from "./TraineeCVModal";
 
 // Custom SVG illustration representing the workspace shown in the reference design
 function WorkspaceIllustration() {
@@ -130,6 +131,7 @@ export function CourseRequestDrawer() {
 
   const [activeTab, setActiveTab] = useState<"records" | "chat" | "workflow">("records");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCVModalOpen, setIsCVModalOpen] = useState(false);
 
   // Local approval status that updates immediately upon clicking
   const [decisionStatus, setDecisionStatus] = useState<string | null>(null);
@@ -259,20 +261,24 @@ export function CourseRequestDrawer() {
             </div>
 
             {/* Requester Row */}
-            <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-100 hover:bg-slate-50/80 transition cursor-pointer shrink-0">
+            <div
+              onClick={() => setIsCVModalOpen(true)}
+              title="ចុចដើម្បីមើលប្រវត្តិរូបសង្ខេប (CV) របស់សិក្ខាកាម (Click to view Trainee CV)"
+              className="flex items-center justify-between px-6 py-3.5 border-b border-slate-100 hover:bg-slate-50/80 active:bg-slate-100 transition cursor-pointer shrink-0 group"
+            >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative">
                   <img
                     src={requesterAvatar}
                     alt={requesterName}
-                    className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-200 shadow-sm"
+                    className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-200 shadow-sm group-hover:ring-[#0088A8] transition-all"
                   />
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 px-1 items-center justify-center rounded-full bg-emerald-600 text-[7.5px] font-semibold text-white ring-1 ring-white">
                     KIT
                   </span>
                 </div>
                 <div className="truncate">
-                  <h4 className="text-sm font-semibold text-slate-800 truncate">
+                  <h4 className="text-sm font-semibold text-slate-800 truncate group-hover:text-[#0088A8] transition-colors">
                     {requesterName}
                   </h4>
                   <p className="text-xs text-slate-400 font-normal truncate mt-0.5">
@@ -280,7 +286,7 @@ export function CourseRequestDrawer() {
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0 ml-2" />
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#0088A8] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </div>
 
             {/* Course Card Detail (Centered) */}
@@ -552,6 +558,15 @@ export function CourseRequestDrawer() {
           </div>
         </div>
       </aside>
+
+      <TraineeCVModal
+        isOpen={isCVModalOpen}
+        onClose={() => setIsCVModalOpen(false)}
+        traineeName={requesterName}
+        department={requesterDept}
+        year={requesterYear}
+        avatarUrl={requesterAvatar}
+      />
     </div>
   );
 }

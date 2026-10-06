@@ -121,20 +121,32 @@ export function Header({ onMenuOpen }: HeaderProps) {
               aria-label="Open profile menu"
               className="flex items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-none"
             >
-              <img
-                src={userProfileImg}
-                alt={role === "admin" ? "Admin Profile" : "User Profile"}
-                className="h-8 w-8 rounded-full object-cover ring-2 ring-slate-200 hover:ring-[#0088A8] transition-all shadow-sm"
-              />
+              {role === "admin" ? (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#0088A8] to-[#0ab3dc] text-white shadow-sm ring-2 ring-slate-200 hover:ring-[#0088A8] transition-all">
+                  <User className="h-4 w-4" />
+                </div>
+              ) : (
+                <img
+                  src={userProfileImg}
+                  alt="User Profile"
+                  className="h-8 w-8 rounded-full object-cover ring-2 ring-slate-200 hover:ring-[#0088A8] transition-all shadow-sm"
+                />
+              )}
             </button>
             {open && (
               <div className="absolute right-0 z-50 mt-3 w-56 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
                 <div className="flex items-center gap-3 border-b border-slate-100 px-3.5 pb-2.5 pt-1">
-                  <img
-                    src={userProfileImg}
-                    alt="Profile"
-                    className="h-10 w-10 rounded-full object-cover ring-1 ring-slate-200 shadow-sm"
-                  />
+                  {role === "admin" ? (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0088A8] to-[#0ab3dc] text-white shadow-sm ring-1 ring-slate-200">
+                      <User className="h-5 w-5" />
+                    </div>
+                  ) : (
+                    <img
+                      src={userProfileImg}
+                      alt="Profile"
+                      className="h-10 w-10 rounded-full object-cover ring-1 ring-slate-200 shadow-sm"
+                    />
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-800">
                       {role === "admin" ? "Administrator" : "សុផាត ផន"}
@@ -211,11 +223,9 @@ export function Header({ onMenuOpen }: HeaderProps) {
               }`}
           >
             <div className="relative">
-              <img
-                src={userProfileImg}
-                alt="Admin"
-                className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-200 shadow-sm"
-              />
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-tr from-[#0088A8] to-[#0ab3dc] text-white shadow-sm ring-2 ring-slate-200">
+                <User className="h-6 w-6" />
+              </div>
               <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0088A8] text-white ring-2 ring-white">
                 <ShieldCheck className="h-3 w-3" />
               </span>

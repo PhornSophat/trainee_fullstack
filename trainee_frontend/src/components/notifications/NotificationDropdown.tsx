@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, CheckCheck } from "lucide-react";
+import { Bell, CheckCheck, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useNotificationStore, type AppNotification } from "@/store/useNotificationStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -20,14 +20,21 @@ function NotificationAvatar({ src, name }: { src?: string; name: string }) {
     .slice(0, 2)
     .toUpperCase() || "U";
 
-  const isTargetUserOrAdmin =
+  const isAdmin = name.toLowerCase().includes("admin");
+  if (isAdmin) {
+    return (
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0088A8] to-[#0ab3dc] text-white shadow-sm ring-1 ring-slate-200">
+        <User className="h-5 w-5" />
+      </div>
+    );
+  }
+
+  const isTargetUser =
     name.includes("សុផាត") ||
     name.includes("Sophat") ||
-    name.includes("គឿន") ||
-    name.includes("Admin") ||
-    name.includes("admin");
+    name.includes("គឿន");
 
-  const avatarSrc = isTargetUserOrAdmin ? userProfileImg : (src || userProfileImg);
+  const avatarSrc = isTargetUser ? userProfileImg : (src || userProfileImg);
 
   if (hasError) {
     return (
