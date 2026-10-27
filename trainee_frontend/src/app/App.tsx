@@ -15,6 +15,12 @@ import { CourseListing as AdminViewCourse } from '@/features/admin/pages/CourseL
 import { CourseApproval } from '@/features/admin/pages/CourseApproval';
 import { ToastNotification } from '@/components/toast/ToastNotification';
 import { AdminRouteGuard } from '@/components/auth/AdminRouteGuard';
+import { useAuthStore } from '@/store/useAuthStore';
+
+function RootRedirect() {
+  const role = useAuthStore((s) => s.role);
+  return <Navigate to={role === 'admin' ? '/admin/courses' : '/trainee/programs'} replace />;
+}
 
 function CourseLearningRedirect() {
   const { courseId } = useParams();
@@ -30,7 +36,7 @@ export function App() {
         <ToastNotification />
         <Routes>
           {/* Root redirect */}
-          <Route path="/" element={<Navigate to="/trainee/programs" replace />} />
+          <Route path="/" element={<RootRedirect />} />
 
           {/* Legacy route redirects */}
           <Route path="/courses/:courseId/learning" element={<CourseLearningRedirect />} />

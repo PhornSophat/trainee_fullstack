@@ -42,6 +42,23 @@ export function CourseCard({ course, onClick, onFavoriteChange }: CourseCardProp
             alt=""
             className="object-contain w-full h-full p-3 transition-transform duration-300 ease-out group-hover:scale-110"
           />
+
+          {/* Status Badge: Studying / Allowed to learn */}
+          {course.approvalStatus === "APPROVED" && (
+            <span className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-600/95 text-white shadow-md backdrop-blur-xs font-kantumruy">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              កំពុងសិក្សា
+            </span>
+          )}
+
+          {/* Status Badge: Pending approval */}
+          {course.approvalStatus === "PENDING" && (
+            <span className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-500/95 text-white shadow-md backdrop-blur-xs font-kantumruy">
+              <span className="w-1.5 h-1.5 rounded-full bg-white" />
+              កំពុងរង់ចាំ
+            </span>
+          )}
+
           <button
             type="button"
             onClick={(event) => {

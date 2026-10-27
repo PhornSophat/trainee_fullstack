@@ -774,7 +774,7 @@ export class CoursesService {
         avatar_url: '/e20220628.jpg',
         course_id: course?.id,
         course_title: course?.title,
-        target_url: course ? `/trainee/programs/${course.id}/learning?tab=Homework` : '/trainee/programs',
+        target_url: course ? `/trainee/programs/${course.id}/learning?tab=Homework&taskId=${taskId}` : `/trainee/programs?taskId=${taskId}`,
         for_role: 'admin',
       });
     } catch (err) {
@@ -873,7 +873,7 @@ export class CoursesService {
       });
       const course = task?.homework?.course;
       const targetUrl = course
-        ? `/trainee/programs/${course.id}/learning?taskId=${taskId}`
+        ? `/trainee/programs/${course.id}/learning?tab=Homework&taskId=${taskId}`
         : `/trainee/programs?taskId=${taskId}`;
 
       if (targetStatus === HomeworkStatusEnum.SUBMITTED) {
@@ -965,7 +965,7 @@ export class CoursesService {
         avatar_url: '/e20220628.jpg',
         course_id: course?.id,
         course_title: course?.title,
-        target_url: course ? `/trainee/programs/${course.id}/learning` : '/trainee/programs',
+        target_url: course ? `/trainee/programs/${course.id}/learning?tab=Homework&taskId=${taskId}` : `/trainee/programs?taskId=${taskId}`,
         for_role: isInstructor ? 'user' : 'admin',
       });
     } catch (err) {

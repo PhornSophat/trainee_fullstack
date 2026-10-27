@@ -115,25 +115,10 @@ export function CreateProgramDrawer({
   };
 
   const handleKhmerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    // Check if user typed or pasted non-Khmer characters
-    const hasInvalid = /[^\u1780-\u17FF\u19E0-\u19FF\u200B\s]/.test(raw);
-
-    if (hasInvalid) {
-      const msg = "មិនអនុញ្ញាតឱ្យបញ្ចូលអក្សរអង់គ្លេសទេ (Khmer letters only)";
-      setKhmerWarning(msg);
-      showToast(msg, "warning");
-      setTimeout(() => setKhmerWarning(""), 3500);
-    } else {
+    setKhmerName(e.target.value);
+    if (khmerWarning) {
       setKhmerWarning("");
     }
-
-    // Allow only Khmer letters, vowels, numerals, spaces, and Zero-Width Space (\u200B)
-    const khmerOnly = raw.replace(
-      /[^\u1780-\u17FF\u19E0-\u19FF\u200B\s]/g,
-      ""
-    );
-    setKhmerName(khmerOnly);
   };
 
   const handleLatinNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

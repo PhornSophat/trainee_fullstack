@@ -5,6 +5,8 @@ import { useNotificationStore, type AppNotification } from "@/store/useNotificat
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCourseRequestDrawerStore } from "@/store/useCourseRequestDrawerStore";
 import { useHomeworkDrawerStore } from "@/store/useHomeworkDrawerStore";
+import { getHomeworks } from "@/services/homeworkService";
+import type { HomeworkTask } from "@/types/course";
 import userProfileImg from "@/assets/images/e20220628.jpg";
 
 type NotificationDropdownProps = {
@@ -85,17 +87,59 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
     // If Admin or Trainee clicks on Homework notification -> show right sliding drawer!
     if (item.type?.startsWith("HOMEWORK")) {
-      let taskId: number | string = 1;
+      let resolvedTaskId: number | string | undefined;
+
       if (item.targetUrl) {
-        const match = item.targetUrl.match(/[?&]taskId=(\d+)/);
-        if (match) taskId = parseInt(match[1], 10);
+        const match = item.targetUrl.match(/[?&]taskId=([^&#]+)/);
+        if (match) {
+          const parsed = parseInt(match[1], 10);
+          resolvedTaskId = isNaN(parsed) ? match[1] : parsed;
+        }
       }
-      openHomeworkDrawer({
-        taskId,
-        courseId: item.courseId,
-        courseTitle: item.courseTitle,
-        taskTitle: item.title,
-      });
+
+      const triggerOpen = (taskIdToOpen: number | string, taskObj?: HomeworkTask) => {
+        openHomeworkDrawer({
+          taskId: taskIdToOpen,
+          courseId: item.courseId,
+          courseTitle: item.courseTitle,
+          taskTitle: taskObj?.title || item.title,
+          task: taskObj,
+        });
+      };
+
+      if (resolvedTaskId !== undefined) {
+        triggerOpen(resolvedTaskId);
+        return;
+      }
+
+      // If taskId is not explicitly in the URL, lookup from course's homework tasks
+      if (item.courseId) {
+        getHomeworks(item.courseId)
+          .then((homeworks) => {
+            const allTasks = homeworks.flatMap((h) => h.tasks || []);
+            const titleMatch = item.message.match(/កិច្ចការ\s*"([^"]+)"/);
+            const mentionedTitle = titleMatch ? titleMatch[1].trim() : "";
+
+            const matchedTask =
+              (mentionedTitle &&
+                allTasks.find(
+                  (t) => t.title?.trim().toLowerCase() === mentionedTitle.toLowerCase()
+                )) ||
+              allTasks[0];
+
+            if (matchedTask) {
+              triggerOpen(matchedTask.id, matchedTask);
+            } else {
+              triggerOpen(1);
+            }
+          })
+          .catch(() => {
+            triggerOpen(1);
+          });
+        return;
+      }
+
+      triggerOpen(1);
       return;
     }
 

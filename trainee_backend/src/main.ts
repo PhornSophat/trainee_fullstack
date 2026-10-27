@@ -8,8 +8,12 @@ import { ValidationExceptionFilter } from './common/filters/validation-exception
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+    const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173,http://localhost')
+    .split(',')
+    .map((o) => o.trim());
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173',
+    origin: allowedOrigins,
+    credentials: true,
   });
   app.setGlobalPrefix('api', {
     exclude: ['/'],
@@ -34,7 +38,7 @@ async function bootstrap() {
   );
 
   const port = process.env.PORT ?? 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   const logger = new Logger('Bootstrap');
   const c = (code: string, text: string) => `\x1b[${code}m${text}\x1b[0m`;
 
