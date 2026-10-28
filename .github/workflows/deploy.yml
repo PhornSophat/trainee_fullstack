@@ -1,0 +1,38 @@
+name: Automated Deploy to AWS EC2
+
+# when to trigger workflow:
+on:
+  push:
+    branches:
+      - main    # trigger whenever push to the main branch
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest    # runs on a clean virtual machine hosted by GitHub
+
+    steps:
+      # step A: Download your repository code onto GitHub runner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # step B: Connect to AWS EC2 server via ssh and execute remote commands
+      - name: Deploy to EC2 via ssh
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/trainee_fullstack
+            echo "1 - Pulling latest changes from GitHub...."
+            git pull origin main
+
+            echo "2 - Rebuilding and restarting containers...."
+            docker-compose down
+            docker-compose up -d --build
+
+            echo "3 - Removing old unused Docker images...."
+            docker image prune -f 
+
+            echo "Deployment completed Sucessfully !!!"
+            
