@@ -58,7 +58,7 @@ export function CourseListing() {
       {/* Header */}
       <div className="my-8 max-w-[67rem]">
         <h1 className="text-[2.25rem] font-bold leading-[2] text-slate-900 font-kantumruy">
-          វគ្គសិក្សាបណ្តុះបណ្តាលផ្នែកបច្ចេកវិទ្យាឌីជីថល
+          វគ្គសិក្សាបណ្តុះបណ្តាលផ្នែកបច្ចេកវិទ្យាឌីជីថលabdjf
         </h1>
 
         <p className="max-w-[58rem] text-[1.2rem] leading-[1.9] text-slate-900 font-kantumruy">
